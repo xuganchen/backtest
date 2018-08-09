@@ -14,8 +14,7 @@ import os
 
 
 class Performance(object):
-    def __init__(self, csv_dir, portfolio_handler, data_handler, periods = 252):
-        self.csv_dir = csv_dir
+    def __init__(self, portfolio_handler, data_handler, periods = 252):
         self.portfolio_handler = portfolio_handler
         self.data_handler = data_handler
         self.equity = {}
@@ -466,8 +465,11 @@ class Performance(object):
         ax.axis([0, 10, 0, 10])
         return ax
 
-    def plot_results(self, out_dir = None, title = None, save_plot = True):
-        self.title = title
+    def plot_results(self, config = None):
+        if config is None:
+            self.title = config['title']
+        else:
+            self.title = None
         rc = {
             'lines.linewidth': 1.0,
             'axes.facecolor': '0.995',
@@ -512,8 +514,10 @@ class Performance(object):
         self._plot_txt_time(stats, ax=ax_txt_time)
 
         plt.show(block=False)
-        if out_dir is not None and title is not None and save_plot == True:
+        if config is not None and config['save_plot'] == True:
             now = datetime.utcnow()
+            out_dir = config['out_dir']
+            title = config['title']
             filename = out_dir + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
             fig.savefig(filename, dpi=150, bbox_inches='tight')
 

@@ -73,34 +73,32 @@ class EMVStrategy(Strategy):
                     self.events.put(signal)
                     self.holdinds[ticker] = "EMPTY"
 
-def run(config, freq, save_plot, tickers):
-    csv_dir = config["csv_dir"]
-    out_dir = config["out_dir"]
-    title = config["title"]
+def run(config, freq, tickers):
     equity = 500.0
     start_date = datetime.datetime(2018, 7, 25, 0, 0, 0)
     end_date = datetime.datetime(2018, 7, 25, 6, 20, 0)
     events_queue = queue.Queue()
     data_handler = JSONDataHandler(
-        csv_dir, freq, events_queue, tickers,
+        config['csv_dir'], freq, events_queue, tickers,
         start_date=start_date, end_date=end_date
     )
     strategy = EMVStrategy(data_handler, events_queue,
                            suggested_quantity=1, window=40, n=10, m=10)
 
-    backtest = Backtest(csv_dir, freq, strategy, tickers, equity, start_date, end_date, events_queue,
+    backtest = Backtest(config, freq, strategy, tickers, equity, start_date, end_date, events_queue,
                         data_handler= data_handler)
 
-    backtest.start_trading(out_dir = out_dir, title = title, save_plot = save_plot)
+    backtest.start_trading(config)
 
 
 if __name__ == "__main__":
     config = {
-        "csv_dir": "F:/Python/backtest/GOOD/ethusdt-trade.csv.2018-07-25.formatted",
+        "csv_dir": "F:/Python/backtest/backtest/ethusdt-trade.csv.2018-07-25.formatted",
         "out_dir": "C:\\Users\\user\\out\\",
-        "title": "EMVStrategy"
+        "title": "EMVStrategy",
+        "save_plot": True,
+        "save_tradelog": True
     }
     freq = 1    # min
-    save_plot = True
     tickers = ['ETHUSDT']
-    run(config, freq, save_plot, tickers)
+    run(config, freq, tickers)

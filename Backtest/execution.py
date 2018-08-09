@@ -15,9 +15,10 @@ class ExecutionHandler(object):
 
 
 class SimulatedExecutionHandler(ExecutionHandler):
-    def __init__(self, events, date_handler):
+    def __init__(self, events, date_handler, compliance = None):
         self.events = events
         self.data_handler = date_handler
+        self.compliance = compliance
 
 
 
@@ -31,3 +32,6 @@ class SimulatedExecutionHandler(ExecutionHandler):
             price = self.data_handler.get_latest_bar_value(ticker, "close")
             fill_event = FillEvent(timestamp, ticker, action, quantity, exchange, price)
             self.events.put(fill_event)
+
+            if self.compliance is not None:
+                self.compliance.record_trade(fill_event)
