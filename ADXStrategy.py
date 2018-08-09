@@ -1,0 +1,105 @@
+
+from __future__ import print_function
+
+import datetime
+import numpy as np
+import pandas as pd
+
+from Backtest.strategy import Strategy
+from Backtest.event import SignalEvent
+from Backtest.event import EventType
+from Backtest.backtest import Backtest
+from Backtest.data import JSONDataHandler
+import queue
+
+
+
+class ADXStrategy(Strategy):
+    def __init__(self, bars, events, suggested_quantity = 1,
+                 window = 10):
+        self.bars = bars
+        self.symbol_list = self.bars.tickers
+        self.events = events
+        self.suggested_quantity = suggested_quantity
+        self.holdinds = self._calculate_initial_holdings()
+
+        self.window = (window - 1) * pd.to_timedelta("1min")
+        self.hd = pd.Series(0, index = bars.times)
+        self.ld = pd.Series(0, index = bars.times)
+
+
+    def _calculate_initial_holdings(self):
+        holdings = {}
+        for s in self.symbol_list:
+            holdings[s] = "EMPTY"
+        return holdings
+
+    def _get_hdld(self, bars_high, bars_low, bar_date):
+        a = bars_high[-1] - bars_high[-2]
+        b = bars_low[-2] - bars_low[-1]
+        if a > 0 and a > b:
+            self.hd[bar_date] = a
+        else:
+            self.hd[bar_date] = 0
+        if b > 0 and b > a:
+            self.ld[bar_date] = b
+        else:
+            self.ld[bar_date] = 0
+
+        hd = np.mean(self.hd[bar_date - self.window: bar_date])
+        ld = np.mean(self.ld[bar_date - self.window: bar_date])
+        return hd, ld
+
+    def generate_signals(self, event):
+        if event.type == EventType.MARKET:
+            ticker = event.ticker
+            bar_date = event.timestamp
+            bars_high = self.bars.get_latest_bars_values(ticker, "high", N = 2)
+            bars_low = self.bars.get_latest_bars_values(ticker, "low", N = 2)
+
+            if len(bars_high) > 1:
+                hd, ld = self._get_hdld(bars_high, bars_low, bar_date)
+                if hd - ld > 0 and self.holdinds[ticker] == "EMPTY":
+                    print("LONG: %s" % bar_date)
+                    signal = SignalEvent(ticker, "LONG", self.suggested_quantity)
+                    self.events.put(signal)
+                    self.holdinds[ticker] = "HOLD"
+                elif hd - ld < 0 and self.holdinds[ticker] == "HOLD":
+                    print("SHORT: %s" % bar_date)
+                    signal = SignalEvent(ticker, "SHORT", self.suggested_quantity)
+                    self.events.put(signal)
+                    self.holdinds[ticker] = "EMPTY"
+
+def run(config, freq, save_plot, tickers):
+    csv_dir = config["csv_dir"]
+    out_dir = config["out_dir"]
+    title = config["title"]
+    equity = 500.0
+    start_date = datetime.datetime(2018, 7, 25, 0, 0, 0)
+    end_date = datetime.datetime(2018, 7, 25, 6, 20, 0)
+    events_queue = queue.Queue()
+    data_handler = JSONDataHandler(
+        csv_dir, freq, events_queue, tickers,
+        start_date=start_date, end_date=end_date
+    )
+    strategy = ADXStrategy(data_handler, events_queue, suggested_quantity = 1,
+                           window = 10)
+
+    backtest = Backtest(csv_dir, freq, strategy, tickers, equity, start_date, end_date, events_queue,
+                        data_handler= data_handler)
+
+    backtest.start_trading(out_dir = out_dir, title = title, save_plot = save_plot)
+
+
+if __name__ == "__main__":
+    config = {
+        "csv_dir": "F:/Python/backtest/GOOD/ethusdt-trade.csv.2018-07-25.formatted",
+        "out_dir": "C:\\Users\\user\\out\\",
+        "title": "ADXStrategy"
+    }
+    freq = 1    # min
+    save_plot = True
+    tickers = ['ETHUSDT']
+    run(config, freq, save_plot, tickers)
+
+
