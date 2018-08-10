@@ -466,7 +466,7 @@ class Performance(object):
         return ax
 
     def plot_results(self, config = None):
-        if config is None:
+        if config is not None:
             self.title = config['title']
         else:
             self.title = None
@@ -515,10 +515,13 @@ class Performance(object):
 
         plt.show(block=False)
         if config is not None and config['save_plot'] == True:
-            now = datetime.utcnow()
             out_dir = config['out_dir']
+            if not os.path.exists(out_dir):
+                os.makedirs(out_dir)
+
+            now = datetime.utcnow()
             title = config['title']
-            filename = out_dir + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
+            filename = out_dir + "\\" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
             fig.savefig(filename, dpi=150, bbox_inches='tight')
 
 

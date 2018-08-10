@@ -24,6 +24,9 @@ class Compliance(AbstractCompliance):
                 "timestamp", "ticker", "action",
                 "quantity", "exchange", "price", "commission"
             ]
+            
+            if not os.path.exists(self.out_dir):
+                os.makedirs(self.out_dir)
 
             fname = os.path.expanduser(os.path.join(self.out_dir, self.csv_fname))
             with open(fname, 'a') as file:

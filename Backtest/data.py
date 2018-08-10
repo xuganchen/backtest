@@ -97,6 +97,7 @@ class JSONDataHandler(DataHandler):
                 print("End Date: %s" % times[-1])
             else:
                 print("End Date: %s" % self.end_date)
+            print("---------------------------------")
 
             self.data = pd.DataFrame.from_records(records, columns=['open', 'high', 'low', 'close', 'volume'],
                                                   index=times)

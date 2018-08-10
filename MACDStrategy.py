@@ -72,7 +72,7 @@ def run(config):
 if __name__ == "__main__":
     config = {
         "csv_dir": "F:/Python/backtest/backtest/ethusdt-trade.csv.2018-07-25.formatted",
-        "out_dir": "C:\\Users\\user\\out\\",
+        "out_dir": "C:\\Users\\user\\out\\MACDStrategy",
         "title": "MACDStrategy",
         "save_plot": True,
         "save_tradelog": True,
