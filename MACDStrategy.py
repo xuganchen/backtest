@@ -71,12 +71,12 @@ def run(config):
 
 if __name__ == "__main__":
     config = {
-        "csv_dir": "F:/Python/backtest/backtest/ethusdt-trade.csv.2018-07-25.formatted",
-        "out_dir": "C:\\Users\\user\\out\\MACDStrategy",
+        "csv_dir": "F:/Python/backtest/ethusdt-trade.csv.2018-07-25.formatted",
+        "out_dir": "F:/Python/backtest/backtest/results/MACDStrategy",
         "title": "MACDStrategy",
         "save_plot": True,
         "save_tradelog": True,
-        "start_date": pd.Timestamp("2018-07-25T00:00:00", tz = "UTC"),
+        "start_date": pd.Timestamp("2018-07-25T04:20:00", tz = "UTC"),
         "end_date": pd.Timestamp("2018-07-25T06:20:00", tz = "UTC"),
         "equity": 500.0,
         "freq": 1,      # min

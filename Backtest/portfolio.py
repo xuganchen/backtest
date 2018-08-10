@@ -39,6 +39,10 @@ class PortfolioHandler(Portfolio):
         self.all_holdings = self.construct_all_holdings()
         self.current_holdings = self.construct_current_holdings()
 
+        self.current_tickers = []
+        self.current_tickers_info = {}
+        self.closed_positions = []
+
     def construct_all_positions(self):
         d = dict([(ticker, 0) for ticker in self.tickers])
         d['datetime'] = self.start_date
@@ -66,7 +70,7 @@ class PortfolioHandler(Portfolio):
         lasest_datetime = self.data_handler.get_latest_bar_datetime(event.ticker)
 
         # Update positions
-        dposition = dict([(ticker, 0) for ticker in self.tickers])
+        dposition = dict([(ticker, {}) for ticker in self.tickers])
         dposition['datetime'] = lasest_datetime
         for ticker in self.tickers:
             dposition[ticker] = self.current_positions[ticker]
@@ -101,10 +105,37 @@ class PortfolioHandler(Portfolio):
         self.current_holdings['cash'] -= (cost + event.commission)
         self.current_holdings['total'] -= (cost + event.commission)
 
+    def update_closed_postions_from_fill(self, event):
+        if event.ticker not in self.current_tickers and event.action == "LONG":
+            self.current_tickers.append(event.ticker)
+            ticker_info = {
+                "timestamp": event.timestamp,
+                "ticker": event.ticker,
+                "price": event.price,
+                "quantity": event.quantity,
+                "commission": event.commission
+            }
+            self.current_tickers_info[event.ticker] = ticker_info
+        elif event.ticker in self.current_tickers and event.action == "SHORT":
+            self.current_tickers.remove(event.ticker)
+            closed_info = self.current_tickers_info.pop(event.ticker)
+            closed = {
+                "ticker": closed_info['ticker'],
+                "quantity": closed_info['quantity'],
+                "return": (event.price - closed_info['price']) / closed_info['price'],
+                "timedelta": event.timestamp - closed_info['timestamp']
+            }
+            self.closed_positions.append(closed)
+        elif event.ticker in self.current_tickers and event.action == "LONG":
+            print("%s is already in position" % event.ticker)
+        elif event.ticker not in self.current_tickers and event.action == "SHORT":
+            print("%s is not in position" % event.ticker)
+
     def update_fill(self, event):
         if event.type == EventType.FILL:
             self.update_positions_from_fill(event)
             self.update_holdings_from_fill(event)
+            self.update_closed_postions_from_fill(event)
 
     def generate_order(self, event):
         ticker = event.ticker
