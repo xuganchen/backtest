@@ -5,7 +5,7 @@ from Backtest.portfolio import PortfolioHandler
 from Backtest.data import JSONDataHandler
 from Backtest.execution import SimulatedExecutionHandler
 from Backtest.performance import Performance
-from Backtest.Compliance import Compliance
+from Backtest.compliance import Compliance
 
 
 class Backtest(object):
