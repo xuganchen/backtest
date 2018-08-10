@@ -88,6 +88,7 @@ class JSONDataHandler(DataHandler):
                 time_counter = time_counter + unit
 
             self.times = times
+            print("Data Time Interval:")
             if self.start_date < times[0]:
                 print("Start Date: %s" % times[0])
             else:
