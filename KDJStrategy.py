@@ -71,19 +71,16 @@ class KDJStrategy(Strategy):
                     self.events.put(signal)
                     self.holdinds[ticker] = "EMPTY"
 
-def run(config, freq, tickers):
-    equity = 500.0
-    start_date = datetime.datetime(2018, 7, 25, 0, 0, 0)
-    end_date = datetime.datetime(2018, 7, 25, 6, 20, 0)
+def run(config):
     events_queue = queue.Queue()
     data_handler = JSONDataHandler(
         config['csv_dir'], freq, events_queue, tickers,
-        start_date=start_date, end_date=end_date
+        start_date=config['start_date'], end_date=config['end_date']
     )
     strategy = KDJStrategy(data_handler, events_queue, suggested_quantity = 1,
                            window = 10, sK=20, sD=20, sJ=10, bK=80, bD=80, bJ=90)
 
-    backtest = Backtest(config, freq, strategy, tickers, equity, start_date, end_date, events_queue,
+    backtest = Backtest(config, events_queue, strategy,
                         data_handler= data_handler)
 
     backtest.start_trading(config)
@@ -95,10 +92,13 @@ if __name__ == "__main__":
         "out_dir": "C:\\Users\\user\\out\\",
         "title": "KDJStrategy",
         "save_plot": True,
-        "save_tradelog": True
+        "save_tradelog": True,
+        "start_date": pd.Timestamp("2018-07-25T00:00:00", tz = "UTC"),
+        "end_date": pd.Timestamp("2018-07-25T06:20:00", tz = "UTC"),
+        "equity": 500.0,
+        "freq": 1,      # min
+        "tickers": ['ETHUSDT']
     }
-    freq = 1    # min
-    tickers = ['ETHUSDT']
-    run(config, freq, tickers)
+    run(config)
 
 

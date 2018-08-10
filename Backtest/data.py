@@ -51,6 +51,7 @@ class JSONDataHandler(DataHandler):
         self.end_date = end_date
         self.trading_data = {}
         self.data = {}
+        self.data_iter = {}
         self.latest_data = {}
         self._open_json_files()
         self.generate_bars()
@@ -86,13 +87,24 @@ class JSONDataHandler(DataHandler):
 
                 time_counter = time_counter + unit
 
-            self.data[ticker] = pd.DataFrame.from_records(records, columns=['open', 'high', 'low', 'close', 'volume'],
-                                                  index=times).iterrows()
             self.times = times
+            if self.start_date < times[0]:
+                print("Start Date: %s" % times[0])
+            else:
+                print("Start Date: %s" % self.start_date)
+            if self.end_date > times[-1]:
+                print("End Date: %s" % times[-1])
+            else:
+                print("End Date: %s" % self.end_date)
+
+            self.data = pd.DataFrame.from_records(records, columns=['open', 'high', 'low', 'close', 'volume'],
+                                                  index=times)
+            self.data_iter[ticker] = self.data.loc[self.start_date: self.end_date].iterrows()
             self.latest_data[ticker] = []
 
+
     def _get_new_bar(self, ticker):
-        for row in self.data[ticker]:
+        for row in self.data_iter[ticker]:
             yield row
 
     def get_latest_bar(self, ticker):

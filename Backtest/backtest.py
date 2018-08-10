@@ -9,16 +9,16 @@ from Backtest.compliance import Compliance
 
 
 class Backtest(object):
-    def __init__(self, config, freq, strategy, tickers, equity, start_date, end_date, events_queue,
-                end_test_time = None, data_handler = None, portfolio_handler = None,
+    def __init__(self, config, events_queue, strategy,
+                 data_handler = None, portfolio_handler = None,
                  execution_handler = None, performance = None, compliance = None):
         self.config = config
-        self.freq = freq
+        self.freq = config['freq']
         self.strategy = strategy
-        self.tickers = tickers
-        self.equity = equity
-        self.start_date = start_date
-        self.end_date = end_date
+        self.tickers = config['tickers']
+        self.equity = config['equity']
+        self.start_date = config['start_date']
+        self.end_date = config['end_date']
         self.events_queue = events_queue
         self.data_handler = data_handler
         self.portfolio_handler = portfolio_handler

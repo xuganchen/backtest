@@ -27,6 +27,18 @@ class Compliance(AbstractCompliance):
 
             fname = os.path.expanduser(os.path.join(self.out_dir, self.csv_fname))
             with open(fname, 'a') as file:
+                writer = csv.writer(file)
+                writer.writerow([
+                    self.config['title'],
+                    "tickers", self.config['tickers'],
+                    "initial equity", self.config['equity'],
+                    "frequency", "%d min" % self.config['freq']
+                ])
+                writer.writerow([
+                    "Start date", self.config['start_date'],
+                    "End date", self.config['end_date']
+                ])
+
                 writer = csv.DictWriter(file, fieldnames = fieldnames)
                 writer.writeheader()
 
