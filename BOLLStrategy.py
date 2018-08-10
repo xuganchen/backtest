@@ -68,7 +68,7 @@ class BOLLStrategy(Strategy):
 def run(config):
     events_queue = queue.Queue()
     data_handler = JSONDataHandler(
-        config['csv_dir'], freq, events_queue, tickers,
+        config['csv_dir'], config['freq'], events_queue, config['tickers'],
         start_date=config['start_date'], end_date=config['end_date']
     )
     strategy = BOLLStrategy(data_handler, events_queue,
