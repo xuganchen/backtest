@@ -1,4 +1,3 @@
-
 import matplotlib.pyplot as plt
 from datetime import datetime
 import pandas as pd
@@ -7,17 +6,19 @@ from itertools import groupby
 import matplotlib.gridspec as gridspec
 import seaborn as sns
 import os
+
 from Backtest.plot_results import *
 
 
 class Performance(object):
-    def __init__(self, portfolio_handler, data_handler, periods = 252):
+    def __init__(self, config, portfolio_handler, data_handler, periods = 365):
+        self.config = config
         self.portfolio_handler = portfolio_handler
         self.data_handler = data_handler
         self.equity = {}
         self.periods = periods
 
-    def update(self, timestamp, portfolio_handler):
+    def update(self, timestamp):
         self.equity[timestamp] = self.portfolio_handler.equity
 
     def _create_drawdown(self, cum_returns):
@@ -41,15 +42,16 @@ class Performance(object):
         else:
             return pd.DataFrame(positions)
 
-    def get_results(self, config = None):
+    def get_results(self):
         # Equity
         res_equity = pd.Series(self.equity).sort_index()
 
         # Returns
         res_returns = res_equity.pct_change().fillna(0.0)
+        res_daily_returns = np.exp(np.log(1 + res_returns).resample('D').sum().dropna())
 
         # Rolling Annualized Sharpe
-        rolling = res_returns.rolling(window = self.periods)
+        rolling = res_daily_returns.rolling(window = self.periods)
         res_rolling_sharpe = np.sqrt(self.periods) * (
             rolling.mean() / rolling.std()
         )
@@ -61,10 +63,14 @@ class Performance(object):
         res_drawdown, res_max_dd, res_mdd_dur = self._create_drawdown(res_cum_returns)
 
         # Sharpe Ratio
-        res_sharpe = np.sqrt(self.periods) * np.mean(res_returns) / np.std(res_returns)
+        if np.std(res_daily_returns) == 0:
+            res_sharpe = np.nan
+        else:
+            res_sharpe = np.sqrt(self.periods) * np.mean(res_daily_returns) / np.std(res_daily_returns)
 
         results = {}
         results['returns'] = res_returns
+        results['daily_returns'] = res_daily_returns
         results['equity'] = res_equity
         results['rolling_sharpe'] = res_rolling_sharpe
         results['cum_returns'] = res_cum_returns
@@ -114,8 +120,8 @@ class Performance(object):
         return results
 
 
-    def plot_results(self, config = None):
-        self.title = config['title']
+    def plot_results(self):
+        self.title = self.config['title']
 
         rc = {
             'lines.linewidth': 1.0,
@@ -141,7 +147,7 @@ class Performance(object):
         fig.suptitle(self.title, y=0.94, weight='bold')
         gs = gridspec.GridSpec(vertical_sections, 3, wspace=0.25, hspace=0.5)
 
-        stats = self.get_results(config = config)
+        stats = self.get_results()
         ax_equity = plt.subplot(gs[:2, :])
         ax_sharpe = plt.subplot(gs[2, :])
         ax_drawdown = plt.subplot(gs[3, :])
@@ -157,17 +163,17 @@ class Performance(object):
         plot_monthly_returns(stats, ax=ax_monthly_returns)
         plot_yearly_returns(stats, ax=ax_yearly_returns)
         plot_txt_curve(stats, ax=ax_txt_curve, periods = self.periods)
-        plot_txt_trade(stats, ax=ax_txt_trade, freq = config['freq'])
+        plot_txt_trade(stats, ax=ax_txt_trade, freq = self.config['freq'])
         plot_txt_time(stats, ax=ax_txt_time)
 
         plt.show(block=False)
-        if config is not None and config['save_plot'] == True:
-            out_dir = config['out_dir']
+        if self.config is not None and self.config['save_plot'] == True:
+            out_dir = self.config['out_dir']
             if not os.path.exists(out_dir):
                 os.makedirs(out_dir)
 
             now = datetime.utcnow()
-            title = config['title']
+            title = self.config['title']
             filename = out_dir + "\\" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
             fig.savefig(filename, dpi=150, bbox_inches='tight')
 

@@ -44,25 +44,17 @@ class BOLLStrategy(Strategy):
                 lowerbound = bars_mean - self.a * bars_std
 
                 if event.close > upperbound and self.holdinds[ticker] == "EMPTY":
-                    print("LONG: %s" % bar_date)
-                    signal = SignalEvent(ticker, "LONG", self.suggested_quantity)
-                    self.events.put(signal)
+                    self.generate_buy_signals(ticker, bar_date, "LONG")
                     self.holdinds[ticker] = "LONG"
                 if event.close < bars_mean and self.holdinds[ticker] == "LONG":
-                    print("CLOSE: %s" % bar_date)
-                    signal = SignalEvent(ticker, "SHORT", self.suggested_quantity)
-                    self.events.put(signal)
+                    self.generate_sell_signals(ticker, bar_date, "CLOSE")
                     self.holdinds[ticker] = "EMPTY"
 
                 if event.close < lowerbound and self.holdinds[ticker] == "EMPTY":
-                    print("SHORT: %s" % bar_date)
-                    signal = SignalEvent(ticker, "SHORT", self.suggested_quantity)
-                    self.events.put(signal)
+                    self.generate_sell_signals(ticker, bar_date, "SHORT")
                     self.holdinds[ticker] = "SHORT"
                 if event.close > bars_mean and self.holdinds[ticker] == "SHORT":
-                    print("CLOSE: %s" % bar_date)
-                    signal = SignalEvent(ticker, "LONG", self.suggested_quantity)
-                    self.events.put(signal)
+                    self.generate_buy_signals(ticker, bar_date, "CLOSE")
                     self.holdinds[ticker] = "EMPTY"
 
 def run(config):
@@ -85,6 +77,7 @@ if __name__ == "__main__":
         "csv_dir": "F:/Python/backtest/ethusdt-trade.csv.2018-07-25.formatted",
         "out_dir": "F:/Python/backtest/backtest/results/BOLLStrategy",
         "title": "BOLLStrategy",
+        "is_plot": True,
         "save_plot": True,
         "save_tradelog": True,
         "start_date": pd.Timestamp("2018-07-25T00:00:00", tz = "UTC"),

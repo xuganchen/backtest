@@ -1,6 +1,3 @@
-import datetime
-import queue
-
 from abc import ABCMeta, abstractmethod
 
 from Backtest.event import FillEvent, OrderEvent
@@ -30,7 +27,8 @@ class SimulatedExecutionHandler(ExecutionHandler):
             quantity = event.quantity
             exchange = "ARCA"
             price = self.data_handler.get_latest_bar_value(ticker, "close")
-            fill_event = FillEvent(timestamp, ticker, action, quantity, exchange, price)
+            trade_mark = event.trade_mark
+            fill_event = FillEvent(timestamp, ticker, action, quantity, exchange, price, trade_mark)
             self.events.put(fill_event)
 
             if self.compliance is not None:

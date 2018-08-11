@@ -1,11 +1,7 @@
-from __future__ import print_function
-import datetime
-import queue
-import numpy as np
-import pandas as pd
+from abc import ABCMeta, abstractmethod
+
 from Backtest.event import FillEvent, OrderEvent
 from Backtest.event import EventType
-from abc import ABCMeta, abstractmethod
 
 class Portfolio(object):
     __metaclass__ = ABCMeta
@@ -140,13 +136,14 @@ class PortfolioHandler(Portfolio):
     def generate_order(self, event):
         ticker = event.ticker
         action = event.action
+        trade_mark = event.trade_mark
 
         if event.suggested_quantity is None:
             quantity = 0
         else:
             quantity = event.suggested_quantity
 
-        order_event = OrderEvent(ticker, action, quantity)
+        order_event = OrderEvent(ticker, action, quantity, trade_mark)
         return order_event
 
     def update_signal(self, event):

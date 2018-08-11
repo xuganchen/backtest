@@ -35,14 +35,10 @@ class MACDStrategy(Strategy):
             bar_date = event.timestamp
 
             if self.holdinds[ticker] == "EMPTY":
-                print("LONG: %s" % bar_date)
-                signal = SignalEvent(ticker, "LONG", self.suggested_quantity)
-                self.events.put(signal)
+                    self.generate_buy_signals(ticker, bar_date, "LONG")
                 self.holdinds[ticker] = "HOLD"
             elif self.holdinds[ticker] == "HOLD":
-                print("SHORT: %s" % bar_date)
-                signal = SignalEvent(ticker, "SHORT", self.suggested_quantity)
-                self.events.put(signal)
+                    self.generate_sell_signals(ticker, bar_date, "SHORT")
                 self.holdinds[ticker] = "EMPTY"
 
 def run(config):

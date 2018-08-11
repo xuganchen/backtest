@@ -52,7 +52,7 @@ class Compliance(AbstractCompliance):
                 writer = csv.writer(file)
                 writer.writerow([
                     fillevent.timestamp, fillevent.ticker,
-                    fillevent.action, fillevent.quantity,
+                    fillevent.trade_mark, fillevent.quantity,
                     fillevent.exchange, fillevent.price,
                     fillevent.commission
                 ])

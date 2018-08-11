@@ -156,7 +156,7 @@ def plot_yearly_returns(stats, ax=None, **kwargs):
     return ax
 
 
-def plot_txt_curve(stats, ax=None, periods = 252, **kwargs):
+def plot_txt_curve(stats, ax=None, periods = 365, **kwargs):
     """
     Outputs the statistics for the equity curve.
     """
@@ -165,6 +165,7 @@ def plot_txt_curve(stats, ax=None, periods = 252, **kwargs):
         return '%.0f%%' % x
 
     returns = stats["returns"]
+    daily_returns = stats['daily_returns']
     cum_returns = stats['cum_returns']
 
     if 'positions' not in stats:
@@ -185,7 +186,7 @@ def plot_txt_curve(stats, ax=None, periods = 252, **kwargs):
     years = len(cum_returns) / float(periods)
     cagr = (cum_returns[-1] ** (1.0 / years)) - 1.0
     sharpe = stats['sharpe']
-    sortino = np.sqrt(periods) * (np.mean(returns)) / np.std(returns[returns < 0])
+    sortino = np.sqrt(periods) * (np.mean(daily_returns)) / np.std(daily_returns[daily_returns < 0])
     slope, intercept, r_value, p_value, std_err = linregress(range(cum_returns.shape[0]), cum_returns)
     rsq = r_value ** 2
     dd = stats['drawdown']
@@ -205,7 +206,7 @@ def plot_txt_curve(stats, ax=None, periods = 252, **kwargs):
     ax.text(7.50, 5.9, '{:.2f}'.format(sortino), fontweight='bold', horizontalalignment='right', fontsize=8)
 
     ax.text(0.25, 4.9, 'Annual Volatility', fontsize=8)
-    ax.text(7.50, 4.9, '{:.2%}'.format(returns.std() * np.sqrt(252)), fontweight='bold', horizontalalignment='right',
+    ax.text(7.50, 4.9, '{:.2%}'.format(daily_returns.std() * np.sqrt(365)), fontweight='bold', horizontalalignment='right',
             fontsize=8)
 
     ax.text(0.25, 3.9, 'R-Squared', fontsize=8)

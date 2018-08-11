@@ -1,5 +1,3 @@
-
-from __future__ import print_function
 from enum import Enum
 
 
@@ -26,19 +24,21 @@ class MarketEvent(Event):
 
 
 class SignalEvent(Event):
-    def __init__(self, ticker, action, suggested_quantity):
+    def __init__(self, ticker, action, suggested_quantity, trade_mark):
         self.type = EventType.SIGNAL
         self.ticker = ticker
         self.action = action        # "LONG" or "SHORT"
         self.suggested_quantity = suggested_quantity
+        self.trade_mark = trade_mark
 
 
 class OrderEvent(Event):
-    def __init__(self, ticker, action, quantity):
+    def __init__(self, ticker, action, quantity, trade_mark):
         self.type = EventType.ORDER
         self.ticker = ticker
         self.action  =action        # "LONG" or "SHORT"
         self.quantity = quantity
+        self.trade_mark = trade_mark
 
     def print_order(self):
         print("Order: Ticker = %s, Action = %s, Quantity = %s" % (
@@ -46,7 +46,7 @@ class OrderEvent(Event):
         ))
 
 class FillEvent(Event):
-    def __init__(self, timestamp, ticker, action, quantity, exchange, price, commission = None):
+    def __init__(self, timestamp, ticker, action, quantity, exchange, price, trade_mark, commission = None):
         self.type = EventType.FILL
         self.timestamp = timestamp
         self.ticker = ticker
@@ -54,6 +54,7 @@ class FillEvent(Event):
         self.quantity = quantity
         self.exchange = exchange
         self.price = price
+        self.trade_mark = trade_mark
         if commission is None:
             self.commission = self.calculate_commission()
         else:

@@ -1,6 +1,5 @@
 import json
 import pandas as pd
-import numpy as np
 
 def open_json_files(csv_dir, ticker):
     data = open(csv_dir).readlines()

@@ -1,11 +1,7 @@
-from __future__ import print_function
-
 from abc import ABCMeta, abstractmethod
-import os
-import datetime
-import json
 import pandas as pd
 import numpy as np
+
 from pandas.tseries.offsets import Minute
 from Backtest.event import MarketEvent
 from Backtest.open_json_files import open_json_files

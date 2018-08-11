@@ -60,14 +60,10 @@ class ADXStrategy(Strategy):
             if len(bars_high) > 1:
                 hd, ld = self._get_hdld(bars_high, bars_low, bar_date)
                 if hd - ld > 0 and self.holdinds[ticker] == "EMPTY":
-                    print("LONG: %s" % bar_date)
-                    signal = SignalEvent(ticker, "LONG", self.suggested_quantity)
-                    self.events.put(signal)
+                    self.generate_buy_signals(ticker, bar_date, "LONG")
                     self.holdinds[ticker] = "HOLD"
                 elif hd - ld < 0 and self.holdinds[ticker] == "HOLD":
-                    print("SHORT: %s" % bar_date)
-                    signal = SignalEvent(ticker, "SHORT", self.suggested_quantity)
-                    self.events.put(signal)
+                    self.generate_sell_signals(ticker, bar_date, "SHORT")
                     self.holdinds[ticker] = "EMPTY"
 
 def run(config):
@@ -90,6 +86,7 @@ if __name__ == "__main__":
         "csv_dir": "F:/Python/backtest/ethusdt-trade.csv.2018-07-25.formatted",
         "out_dir": "F:/Python/backtest/backtest/results/ADXStrategy",
         "title": "ADXStrategy",
+        "is_plot": True,
         "save_plot": True,
         "save_tradelog": True,
         "start_date": pd.Timestamp("2018-07-25T00:00:00", tz = "UTC"),

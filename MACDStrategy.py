@@ -1,16 +1,11 @@
-
-from __future__ import print_function
-
-import datetime
 import numpy as np
 import pandas as pd
+import queue
 
 from Backtest.strategy import Strategy
-from Backtest.event import SignalEvent
 from Backtest.event import EventType
 from Backtest.backtest import Backtest
 from Backtest.data import JSONDataHandler
-import queue
 
 
 
@@ -44,14 +39,10 @@ class MACDStrategy(Strategy):
                 long_ma  = np.mean(bars[-self.long_window:])
 
                 if short_ma > long_ma and self.holdinds[ticker] == "EMPTY":
-                    print("LONG: %s" % bar_date)
-                    signal = SignalEvent(ticker, "LONG", self.suggested_quantity)
-                    self.events.put(signal)
+                    self.generate_buy_signals(ticker, bar_date, "LONG")
                     self.holdinds[ticker] = "HOLD"
                 elif short_ma < long_ma and self.holdinds[ticker] == "HOLD":
-                    print("SHORT: %s" % bar_date)
-                    signal = SignalEvent(ticker, "SHORT", self.suggested_quantity)
-                    self.events.put(signal)
+                    self.generate_sell_signals(ticker, bar_date, "SHORT")
                     self.holdinds[ticker] = "EMPTY"
 
 def run(config):
@@ -66,7 +57,8 @@ def run(config):
     backtest = Backtest(config, events_queue, strategy,
                         data_handler= data_handler)
 
-    backtest.start_trading(config)
+    results = backtest.start_trading()
+    return backtest, results
 
 
 if __name__ == "__main__":
@@ -74,6 +66,7 @@ if __name__ == "__main__":
         "csv_dir": "F:/Python/backtest/ethusdt-trade.csv.2018-07-25.formatted",
         "out_dir": "F:/Python/backtest/backtest/results/MACDStrategy",
         "title": "MACDStrategy",
+        "is_plot": True,
         "save_plot": True,
         "save_tradelog": True,
         "start_date": pd.Timestamp("2018-07-25T04:20:00", tz = "UTC"),
@@ -82,6 +75,6 @@ if __name__ == "__main__":
         "freq": 1,      # min
         "tickers": ['ETHUSDT']
     }
-    run(config)
+    backtest, results = run(config)
 
 

@@ -1,12 +1,11 @@
-from __future__ import print_function
-from Backtest.event import EventType
 import queue
+
 from Backtest.portfolio import PortfolioHandler
 from Backtest.data import JSONDataHandler
 from Backtest.execution import SimulatedExecutionHandler
 from Backtest.performance import Performance
 from Backtest.compliance import Compliance
-
+from Backtest.event import EventType
 
 class Backtest(object):
     def __init__(self, config, events_queue, strategy,
@@ -49,7 +48,7 @@ class Backtest(object):
             )
         if self.performance is None:
             self.performance = Performance(
-                self.portfolio_handler, self.data_handler
+                self.config, self.portfolio_handler, self.data_handler
             )
 
     def _continue_loop_condition(self):
@@ -77,7 +76,7 @@ class Backtest(object):
                         if event.type == EventType.MARKET:
                             self.strategy.generate_signals(event)
                             self.portfolio_handler.update_timeindex(event)
-                            self.performance.update(event.timestamp, self.portfolio_handler)
+                            self.performance.update(event.timestamp)
 
                         if event.type == EventType.SIGNAL:
                             self.portfolio_handler.update_signal(event)
@@ -87,9 +86,12 @@ class Backtest(object):
 
                         if event.type == EventType.FILL:
                             self.portfolio_handler.update_fill(event)
+        print("---------------------------------")
+        print("Backtest complete.")
+        print("---------------------------------")
 
-    def _output_performance(self, config = None):
-        results = self.performance.get_results(config = config)
+    def _output_performance(self):
+        results = self.performance.get_results()
         print("Sharpe Ratio: %0.10f" % results['sharpe'])
         print("Max Drawdown: %0.10f" % (results["max_drawdown"] * 100.0))
         print("Max Drawdown Duration: %d" % (results['max_drawdown_duration']))
@@ -105,16 +107,15 @@ class Backtest(object):
         print("Worst Trade Date: %s" % results['trade_info']['max_loss_dt'])
         print("Avg Days in Trade: %s" % results['trade_info']['avg_dit'])
         print("---------------------------------")
-        self.performance.plot_results(config = config)
+
+        if self.config['is_plot'] or self.config['save_plot']:
+            self.performance.plot_results()
         return results
 
 
-    def start_trading(self, config = None, save_plot = False):
+    def start_trading(self):
         self._run_backtest()
-        print("---------------------------------")
-        print("Backtest complete.")
-        print("---------------------------------")
-        results = self._output_performance(config = config)
+        results = self._output_performance()
         return results
 
 

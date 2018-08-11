@@ -1,7 +1,0 @@
-MACDStrategy_84_120,tickers,['ETHUSDT'],initial equity,500.0,frequency,1 min
-Start date,2018-07-25 00:00:00+00:00,End date,2018-07-25 04:20:00+00:00
-timestamp,ticker,action,quantity,exchange,price,commission
-2018-07-25 01:24:00+00:00,ETHUSDT,LONG,1,ARCA,481.01,0.013
-2018-07-25 01:34:00+00:00,ETHUSDT,SHORT,1,ARCA,480.5,0.013
-2018-07-25 02:36:00+00:00,ETHUSDT,LONG,1,ARCA,478.78,0.013
-2018-07-25 02:41:00+00:00,ETHUSDT,SHORT,1,ARCA,478.83,0.013
