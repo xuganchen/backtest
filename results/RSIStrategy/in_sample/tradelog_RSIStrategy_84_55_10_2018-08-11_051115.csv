@@ -1,0 +1,3 @@
+RSIStrategy_84_55_10,tickers,['ETHUSDT'],initial equity,500.0,frequency,1 min
+Start date,2018-07-25 00:00:00+00:00,End date,2018-07-25 04:20:00+00:00
+timestamp,ticker,action,quantity,exchange,price,commission

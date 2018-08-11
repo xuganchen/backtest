@@ -1,0 +1,4 @@
+RSIStrategy_60_90_45,tickers,['ETHUSDT'],initial equity,500.0,frequency,1 min
+Start date,2018-07-25 00:00:00+00:00,End date,2018-07-25 04:20:00+00:00
+timestamp,ticker,action,quantity,exchange,price,commission
+2018-07-25 01:01:00+00:00,ETHUSDT,LONG,1,ARCA,478.3,0.013

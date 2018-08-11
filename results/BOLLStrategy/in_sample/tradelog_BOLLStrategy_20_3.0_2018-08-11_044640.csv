@@ -1,0 +1,5 @@
+BOLLStrategy_20_3.0,tickers,['ETHUSDT'],initial equity,500.0,frequency,1 min
+Start date,2018-07-25 00:00:00+00:00,End date,2018-07-25 04:20:00+00:00
+timestamp,ticker,action,quantity,exchange,price,commission
+2018-07-25 00:37:00+00:00,ETHUSDT,SHORT,1,ARCA,480.45,0.013
+2018-07-25 00:46:00+00:00,ETHUSDT,LONG,1,ARCA,482.31,0.013
