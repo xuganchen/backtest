@@ -1,7 +1,7 @@
 import pandas as pd
 from Backtest.open_gz_files import open_gz_files
 import time
-#
+
 # csv_dir = 'F:\\Python\\backtest\\trades_Bitfinex_folder'
 # ticker = 'ETHUSD'
 #
@@ -12,7 +12,7 @@ import time
 
 
 csv_dir = 'F:\\Python\\backtest\\trades_Bitfinex_folder'
-tickers =  ['BCCBTC', 'BCCUSD', 'BCHBTC', 'BCHETH', 'BCHUSD',
+tickers = ['BCCBTC', 'BCCUSD', 'BCHBTC', 'BCHETH', 'BCHUSD',
             'ELFBTC', 'ELFETH', 'ELFUSD', 'EOSBTC', 'EOSETH',
             'EOSUSD', 'ETCBTC', 'ETCUSD', 'ETHBTC', 'ETHUSD',
             'IOSBTC', 'IOSETH', 'IOSUSD', 'LTCBTC', 'LTCUSD',
@@ -20,7 +20,7 @@ tickers =  ['BCCBTC', 'BCCUSD', 'BCHBTC', 'BCHETH', 'BCHUSD',
 
 for ticker in tickers:
     start = time.clock()
-    h5 = pd.HDFStore(csv_dir + '\\trades_Bitfinex_folder.h5', 'w')
+    h5 = pd.HDFStore(csv_dir + '\\' + ticker + '.h5', 'w')
     df = open_gz_files(csv_dir, ticker)
     h5[ticker] = df
     h5.close()

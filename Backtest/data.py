@@ -51,15 +51,18 @@ class JSONDataHandler(DataHandler):
         self.data_iter = {}
         self.latest_data = {}
         self.times = pd.Series()
+        
         if trading_data is None:
             self._open_gz_files()
             # self._open_json_files()
         else:
             self.trading_data = trading_data
+
         if data is None:
             self.generate_bars()
         else:
             self.data = data
+
         for ticker in self.tickers:
             self.data_iter[ticker] = self.data[ticker].loc[self.start_date: self.end_date].iterrows()
             self.latest_data[ticker] = []
@@ -67,11 +70,11 @@ class JSONDataHandler(DataHandler):
             times = self.data[ticker].index
             print("Data Time Interval for %s:" % (ticker))
             if self.start_date < times[0]:
-                print("\tStart Date\t: %s" % self.times[0])
+                print("\tStart Date\t: %s" % times[0])
             else:
                 print("\tStart Date\t: %s" % self.start_date)
             if self.end_date > times[-1]:
-                print("\tEnd Date\t: %s" % self.times[-1])
+                print("\tEnd Date\t: %s" % times[-1])
             else:
                 print("\tEnd Date\t: %s" % self.end_date)
 
