@@ -38,7 +38,7 @@ class DataHandler(object):
 
 
 class JSONDataHandler(DataHandler):
-    def __init__(self, csv_dir, freq, events_queue, tickers, start_date = None, end_date = None, trading_data = None):
+    def __init__(self, csv_dir, freq, events_queue, tickers, start_date = None, end_date = None, trading_data = None, data = None):
         self.csv_dir = csv_dir
         self.freq = freq
         self.events_queue = events_queue
@@ -50,12 +50,37 @@ class JSONDataHandler(DataHandler):
         self.data = {}
         self.data_iter = {}
         self.latest_data = {}
+        self.times = pd.Series()
         if trading_data is None:
             self._open_gz_files()
             # self._open_json_files()
         else:
             self.trading_data = trading_data
-        self.generate_bars()
+        if data is None:
+            self.generate_bars()
+        else:
+            self.data = data
+        for ticker in self.tickers:
+            self.data_iter[ticker] = self.data[ticker].loc[self.start_date: self.end_date].iterrows()
+            self.latest_data[ticker] = []
+
+            times = self.data[ticker].index
+            print("Data Time Interval for %s:" % (ticker))
+            if self.start_date < times[0]:
+                print("\tStart Date\t: %s" % self.times[0])
+            else:
+                print("\tStart Date\t: %s" % self.start_date)
+            if self.end_date > times[-1]:
+                print("\tEnd Date\t: %s" % self.times[-1])
+            else:
+                print("\tEnd Date\t: %s" % self.end_date)
+
+            times = times.to_series()
+            self.times = pd.concat([self.times, times]).drop_duplicates()
+            self.times = self.times.sort_index()
+
+
+
 
     def _open_json_files(self):
         for ticker in self.tickers:
@@ -82,23 +107,29 @@ class JSONDataHandler(DataHandler):
                 "close": "last",
                 "volume": "sum"
             })
-            # data.loc[data['volume'] == 0, 'volume'] = np.nan
-            # data.fillna(method = 'backfill', inplace = True)
+            data.loc[data['volume'] == 0, 'volume'] = np.nan
+            data.fillna(method = 'backfill', inplace = True)
 
             self.data[ticker] = data
-            self.data_iter[ticker] = data.loc[self.start_date: self.end_date].iterrows()
-            self.latest_data[ticker] = []
+            # self.data_iter[ticker] = data.loc[self.start_date: self.end_date].iterrows()
+            # self.latest_data[ticker] = []
 
-            self.times = data.index
-            print("Data Time Interval for %s:" % (ticker))
-            if self.start_date < self.times[0]:
-                print("\tStart Date\t: %s" % self.times[0])
-            else:
-                print("\tStart Date\t: %s" % self.start_date)
-            if self.end_date > self.times[-1]:
-                print("\tEnd Date\t: %s" % self.times[-1])
-            else:
-                print("\tEnd Date\t: %s" % self.end_date)
+            # times = data.index
+            # print("Data Time Interval for %s:" % (ticker))
+            # if self.start_date < times[0]:
+            #     print("\tStart Date\t: %s" % self.times[0])
+            # else:
+            #     print("\tStart Date\t: %s" % self.start_date)
+            # if self.end_date > times[-1]:
+            #     print("\tEnd Date\t: %s" % self.times[-1])
+            # else:
+            #     print("\tEnd Date\t: %s" % self.end_date)
+
+            # times = times.to_series()
+            # self.times = pd.concat([self.times, times]).drop_duplicates()
+            # self.times = self.times.sort_index()
+
+
 
     def _get_new_bar(self, ticker):
         for row in self.data_iter[ticker]:

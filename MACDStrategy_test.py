@@ -46,7 +46,8 @@ def run_1min():
 
     trading_data = {}
     for ticker in config_in['tickers']:
-        trading_data[ticker] = open_gz_files(config_in['csv_dir'], ticker)
+        # trading_data[ticker] = open_gz_files(config_in['csv_dir'], ticker)
+        trading_data[ticker] = pd.read_hdf(config_in['csv_dir'] + '\\trades_Bitfinex_folder.h5', key=ticker)
 
     # interval = np.array([5, 10, 12, 26, 30, 35, 45, 60, 72, 84, 96, 120, 252])
     interval = np.array([5, 12, 26, 45, 60, 96, 120, 252])
@@ -169,17 +170,19 @@ def run_60min():
         "end_date": pd.Timestamp("2018-04-01T00:00:00", freq="60" + "T"),
         "equity": 100000.0,
         "freq": 60,  # min
-        # "tickers": ['ETHUSD']
-        "tickers": ['BCCBTC', 'BCCUSD', 'BCHBTC', 'BCHETH', 'BCHUSD',
-                    'ELFBTC', 'ELFETH', 'ELFUSD', 'EOSBTC', 'EOSETH',
-                    'EOSUSD', 'ETCBTC', 'ETCUSD', 'ETHBTC', 'ETHUSD',
-                    'IOSBTC', 'IOSETH', 'IOSUSD', 'LTCBTC', 'LTCUSD',
-                    'XRPBTC', 'XRPUSD']
+        "tickers": ['ETHUSD', 'BCHUSD', 'BCHBTC', 'BCHETH', 'EOSBTC']
+        # "tickers": ['BCCBTC', 'BCCUSD', 'BCHBTC', 'BCHETH', 'BCHUSD',
+        #             'ELFBTC', 'ELFETH', 'ELFUSD', 'EOSBTC', 'EOSETH',
+        #             'EOSUSD', 'ETCBTC', 'ETCUSD', 'ETHBTC', 'ETHUSD',
+        #             'IOSBTC', 'IOSETH', 'IOSUSD', 'LTCBTC', 'LTCUSD',
+        #             'XRPBTC', 'XRPUSD']
     }
 
     trading_data = {}
     for ticker in config_in['tickers']:
-        trading_data[ticker] = open_gz_files(config_in['csv_dir'], ticker)
+        # trading_data[ticker] = open_gz_files(config_in['csv_dir'], ticker)
+        trading_data[ticker] = pd.read_hdf(config_in['csv_dir'] + '\\trades_Bitfinex_folder.h5', key=ticker)
+
 
     # interval = np.array([5, 10, 12, 26, 30, 35, 45, 60, 72, 84, 96, 120, 252])
     # interval = np.array([5, 10, 12, 26, 30, 45, 60, 72, 84, 96, 120])
@@ -248,12 +251,12 @@ def run_60min():
         "end_date": pd.Timestamp("2018-09-01T00:00:00", freq="60" + "T"),
         "equity": 100000.0,
         "freq": 60,  # min
-        # "tickers": ['ETHUSD']
-        "tickers": ['BCCBTC', 'BCCUSD', 'BCHBTC', 'BCHETH', 'BCHUSD',
-                    'ELFBTC', 'ELFETH', 'ELFUSD', 'EOSBTC', 'EOSETH',
-                    'EOSUSD', 'ETCBTC', 'ETCUSD', 'ETHBTC', 'ETHUSD',
-                    'IOSBTC', 'IOSETH', 'IOSUSD', 'LTCBTC', 'LTCUSD',
-                    'XRPBTC', 'XRPUSD']
+        "tickers": ['ETHUSD', 'BCHUSD', 'BCHBTC', 'BCHETH', 'EOSBTC']
+        # "tickers": ['BCCBTC', 'BCCUSD', 'BCHBTC', 'BCHETH', 'BCHUSD',
+        #             'ELFBTC', 'ELFETH', 'ELFUSD', 'EOSBTC', 'EOSETH',
+        #             'EOSUSD', 'ETCBTC', 'ETCUSD', 'ETHBTC', 'ETHUSD',
+        #             'IOSBTC', 'IOSETH', 'IOSUSD', 'LTCBTC', 'LTCUSD',
+        #             'XRPBTC', 'XRPUSD']
     }
 
     best_short_window = ans["short_window"].head(10)

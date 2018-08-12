@@ -46,7 +46,8 @@ def run_1min():
 
     trading_data = {}
     for ticker in config_in['tickers']:
-        trading_data[ticker] = open_gz_files(config_in['csv_dir'], ticker)
+        # trading_data[ticker] = open_gz_files(config_in['csv_dir'], ticker)
+        trading_data[ticker] = pd.read_hdf(config_in['csv_dir'] + '\\trades_Bitfinex_folder.h5', key=ticker)
 
     # interval = np.array([5, 10, 12, 26, 30, 35, 45, 60])
     # interval_s = np.array([10, 20, 30])
@@ -184,14 +185,15 @@ def run_60min():
 
     trading_data = {}
     for ticker in config_in['tickers']:
-        trading_data[ticker] = open_gz_files(config_in['csv_dir'], ticker)
+        # trading_data[ticker] = open_gz_files(config_in['csv_dir'], ticker)
+        trading_data[ticker] = pd.read_hdf(config_in['csv_dir'] + '\\trades_Bitfinex_folder.h5', key=ticker)
 
-    # interval = np.array([5, 10, 12, 26, 30, 35, 45, 60])
-    # interval_s = np.array([10, 20, 30])
-    # interval_b = np.array([90, 80, 70])
-    interval = np.array([12, 26])
-    interval_s = np.array([30])
-    interval_b = np.array([70])
+    interval = np.array([5, 10, 12, 26, 30, 35, 45, 60])
+    interval_s = np.array([10, 20, 30])
+    interval_b = np.array([90, 80, 70])
+    # interval = np.array([12, 26])
+    # interval_s = np.array([30])
+    # interval_b = np.array([70])
 
     ans = []
 
@@ -268,11 +270,11 @@ def run_60min():
         window = best_window.iloc[i]
         s = best_s.iloc[i]
         b = best_b.iloc[i]
-        config_in['title'] = "KDJStrategy" + "_" + str(window) + "_" + str(s) + "_" + str(b)
+        config_out['title'] = "KDJStrategy" + "_" + str(window) + "_" + str(s) + "_" + str(b)
         print("---------------------------------")
         print(config_out['title'])
         print("---------------------------------")
-        backtest, results = run(config_in, trading_data, window = window, sK=s, sD=s, sJ=s, bK=b, bD=b, bJ=b)
+        backtest, results = run(config_out, trading_data, window = window, sK=s, sD=s, sJ=s, bK=b, bD=b, bJ=b)
         dict_ans = {
             "window": window,
             "s": s,

@@ -46,7 +46,8 @@ def run_1min():
 
     trading_data = {}
     for ticker in config_in['tickers']:
-        trading_data[ticker] = open_gz_files(config_in['csv_dir'], ticker)
+        # trading_data[ticker] = open_gz_files(config_in['csv_dir'], ticker)
+        trading_data[ticker] = pd.read_hdf(config_in['csv_dir'] + '\\trades_Bitfinex_folder.h5', key=ticker)
 
     # interval = np.array([5, 10, 26, 30, 45])
     interval = np.array([10, 26])
@@ -180,10 +181,10 @@ def run_60min():
 
     trading_data = {}
     for ticker in config_in['tickers']:
-        trading_data[ticker] = open_gz_files(config_in['csv_dir'], ticker)
-
-    # interval = np.array([5, 10, 26, 30, 45])
-    interval = np.array([26])
+        # trading_data[ticker] = open_gz_files(config_in['csv_dir'], ticker)
+        trading_data[ticker] = pd.read_hdf(config_in['csv_dir'] + '\\trades_Bitfinex_folder.h5', key=ticker)
+    interval = np.array([5, 10, 26, 30, 45])
+    # interval = np.array([26])
 
     ans = []
 
