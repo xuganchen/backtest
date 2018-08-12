@@ -46,7 +46,7 @@ class OrderEvent(Event):
         ))
 
 class FillEvent(Event):
-    def __init__(self, timestamp, ticker, action, quantity, exchange, price, trade_mark, commission = None):
+    def __init__(self, timestamp, ticker, action, quantity, exchange, price, trade_mark, commission_ratio):
         self.type = EventType.FILL
         self.timestamp = timestamp
         self.ticker = ticker
@@ -55,13 +55,10 @@ class FillEvent(Event):
         self.exchange = exchange
         self.price = price
         self.trade_mark = trade_mark
-        if commission is None:
-            self.commission = self.calculate_commission()
+        if commission_ratio is None:
+            self.commission = 0.001 * self.quantity * self.price
         else:
-            self.commission = commission
+            self.commission = commission_ratio * self.quantity * self.price
 
-    def calculate_commission(self):
-        commission = 0.001 * self.quantity * self.price
-        return commission
 
 

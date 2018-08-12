@@ -41,6 +41,7 @@ def run_1min():
         "end_date": pd.Timestamp("2018-04-01T00:00:00", freq="1" + "T"),
         "equity": 100000.0,
         "freq": 1,  # min
+        "commission_ratio": 0.001,
         "tickers": ['ETHUSD']
     }
 
@@ -114,6 +115,7 @@ def run_1min():
         "end_date": pd.Timestamp("2018-09-01T00:00:00", freq="1" + "T"),
         "equity": 100000.0,
         "freq": 1,  # min
+        "commission_ratio": 0.001,
         "tickers": ['ETHUSD']
     }
     
@@ -160,8 +162,8 @@ def run_60min():
     ## 样本内
 
     config_in = {
-        "csv_dir": "F:/Python/backtest/trades_Bitfinex_folder",
-        "out_dir": "F:/Python/backtest/backtest/results/MACDStrategy/60min/in_sample",
+        "csv_dir": "C:/backtest/trades_Bitfinex_folder",
+        "out_dir": "C:/backtest/backtest/results/MACDStrategy/60min/in_sample",
         "title": "MACDStrategy",
         "is_plot": False,
         "save_plot": False,
@@ -170,7 +172,8 @@ def run_60min():
         "end_date": pd.Timestamp("2018-04-01T00:00:00", freq="60" + "T"),
         "equity": 100000.0,
         "freq": 60,  # min
-        "tickers": ['ETHUSD', 'BCHUSD', 'BCHBTC', 'BCHETH', 'EOSBTC']
+        "commission_ratio": 0.001,
+        "tickers": ['ETHUSD'] #, 'BCHUSD', 'BCHBTC', 'BCHETH', 'EOSBTC']
         # "tickers": ['BCCBTC', 'BCCUSD', 'BCHBTC', 'BCHETH', 'BCHUSD',
         #             'ELFBTC', 'ELFETH', 'ELFUSD', 'EOSBTC', 'EOSETH',
         #             'EOSUSD', 'ETCBTC', 'ETCUSD', 'ETHBTC', 'ETHUSD',
@@ -222,7 +225,7 @@ def run_60min():
 
     if not os.path.exists(config_in['out_dir']):
         os.makedirs(config_in['out_dir'])
-    ans.to_csv("F:/Python/backtest/backtest/results/MACDStrategy/60min" + "/result_MACDStrategy_in_sample.csv")
+    ans.to_csv("C:/backtest/backtest/results/MACDStrategy/60min" + "/result_MACDStrategy_in_sample.csv")
     ans = ans.sort_values(by="Total Returns", ascending=False)
 
     config_in["is_plot"] = True
@@ -241,8 +244,8 @@ def run_60min():
     ## 样本外
 
     config_out = {
-        "csv_dir": "F:/Python/backtest/trades_Bitfinex_folder",
-        "out_dir": "F:/Python/backtest/backtest/results/MACDStrategy/60min/out_sample",
+        "csv_dir": "C:/backtest/trades_Bitfinex_folder",
+        "out_dir": "C:/backtest/backtest/results/MACDStrategy/60min/out_sample",
         "title": "MACDStrategy",
         "is_plot": True,
         "save_plot": True,
@@ -251,7 +254,8 @@ def run_60min():
         "end_date": pd.Timestamp("2018-09-01T00:00:00", freq="60" + "T"),
         "equity": 100000.0,
         "freq": 60,  # min
-        "tickers": ['ETHUSD', 'BCHUSD', 'BCHBTC', 'BCHETH', 'EOSBTC']
+        "commission_ratio": 0.001,
+        "tickers": ['ETHUSD'] #, 'BCHUSD', 'BCHBTC', 'BCHETH', 'EOSBTC']
         # "tickers": ['BCCBTC', 'BCCUSD', 'BCHBTC', 'BCHETH', 'BCHUSD',
         #             'ELFBTC', 'ELFETH', 'ELFUSD', 'EOSBTC', 'EOSETH',
         #             'EOSUSD', 'ETCBTC', 'ETCUSD', 'ETHBTC', 'ETHUSD',
@@ -295,7 +299,7 @@ def run_60min():
 
     if not os.path.exists(config_out['out_dir']):
         os.makedirs(config_out['out_dir'])
-    best.to_csv("F:/Python/backtest/backtest/results/MACDStrategy/60min" + "/result_MACDStrategy_out_sample.csv")
+    best.to_csv("C:/backtest/backtest/results/MACDStrategy/60min" + "/result_MACDStrategy_out_sample.csv")
 
 
 

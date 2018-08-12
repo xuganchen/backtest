@@ -41,6 +41,7 @@ def run_1min():
         "end_date": pd.Timestamp("2018-04-01T00:00:00", freq="1" + "T"),
         "equity": 100000.0,
         "freq": 1,  # min
+        "commission_ratio": 0.001, 
         "tickers": ['ETHUSD']
     }
 
@@ -123,6 +124,7 @@ def run_1min():
         "end_date": pd.Timestamp("2018-09-01T00:00:00", freq="1" + "T"),
         "equity": 100000.0,
         "freq": 1,  # min
+        "commission_ratio": 0.001, 
         "tickers": ['ETHUSD']
     }
     
@@ -180,6 +182,7 @@ def run_60min():
         "end_date": pd.Timestamp("2018-04-01T00:00:00", freq="60" + "T"),
         "equity": 100000.0,
         "freq": 60,  # min
+        "commission_ratio": 0.001, 
         "tickers": ['ETHUSD']
     }
 
@@ -262,6 +265,7 @@ def run_60min():
         "end_date": pd.Timestamp("2018-09-01T00:00:00", freq="60" + "T"),
         "equity": 100000.0,
         "freq": 60,  # min
+        "commission_ratio": 0.001, 
         "tickers": ['ETHUSD']
     }
     

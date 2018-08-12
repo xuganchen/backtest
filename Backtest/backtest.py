@@ -44,7 +44,8 @@ class Backtest(object):
             )
         if self.execution_handler is None:
             self.execution_handler = SimulatedExecutionHandler(
-                self.events_queue, self.data_handler, self.compliance
+                self.config, self.events_queue,
+                self.data_handler, self.compliance
             )
         if self.performance is None:
             self.performance = Performance(

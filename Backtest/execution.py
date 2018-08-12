@@ -12,10 +12,11 @@ class ExecutionHandler(object):
 
 
 class SimulatedExecutionHandler(ExecutionHandler):
-    def __init__(self, events, date_handler, compliance = None):
+    def __init__(self, config, events, date_handler, compliance = None):
         self.events = events
         self.data_handler = date_handler
         self.compliance = compliance
+        self.config = config
 
 
 
@@ -28,7 +29,11 @@ class SimulatedExecutionHandler(ExecutionHandler):
             exchange = "ARCA"
             price = self.data_handler.get_latest_bar_value(ticker, "close")
             trade_mark = event.trade_mark
-            fill_event = FillEvent(timestamp, ticker, action, quantity, exchange, price, trade_mark)
+            if self.config['commission_ratio'] is not None:
+                commission = self.config['commission_ratio']
+            else:
+                commission = None
+            fill_event = FillEvent(timestamp, ticker, action, quantity, exchange, price, trade_mark, commission)
             self.events.put(fill_event)
 
             if self.compliance is not None:

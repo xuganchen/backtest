@@ -79,6 +79,7 @@ if __name__ == "__main__":
         "end_date": pd.Timestamp("2018-07-25T00:00:00", freq = "1" + "T"),
         "equity": 500.0,
         "freq": 1,      # min
+        "commission": 0.001, 
         "tickers": ['ETHUSD']
     }
     backtest, results = run(config)

@@ -84,6 +84,7 @@ if __name__ == "__main__":
         "end_date": pd.Timestamp("2018-07-25T06:20:00", tz = "UTC"),
         "equity": 500.0,
         "freq": 1,      # min
+        "commission": 0.001, 
         "tickers": ['ETHUSDT']
     }
     run(config)
