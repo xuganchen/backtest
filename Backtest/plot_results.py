@@ -61,10 +61,7 @@ def plot_rolling_sharpe(stats, ax=None, **kwargs):
     sharpe.plot(lw=2, color='green', alpha=0.6, x_compat=False,
                 label='Backtest', ax=ax, **kwargs)
 
-    if len(sharpe) > 252:
-        ax.axvline(sharpe.index[252], linestyle="dashed", c="gray", lw=2)
-    else:
-        ax.axvline(sharpe.index[0], linestyle="dashed", c="gray", lw=2)
+    ax.axvline(sharpe.index[0], linestyle="dashed", c="gray", lw=2)
     ax.set_ylabel('Rolling Annualised Sharpe')
     ax.legend(loc='best')
     ax.set_xlabel('')
@@ -167,13 +164,14 @@ def plot_txt_curve(stats, ax=None, periods = 365, **kwargs):
     returns = stats["returns"]
     daily_returns = stats['daily_returns']
     cum_returns = stats['cum_returns']
+    daily_cum_returns = stats['daily_cum_returns']
 
     if 'positions' not in stats:
         trd_yr = 0
     else:
         positions = stats['positions']
         trd_yr = positions.shape[0] / (
-                (returns.index[-1] - returns.index[0]).seconds / (60 * 60 * 24 * periods)
+                (returns.index[-1] - returns.index[0]).days / (periods)
         )
 
     if ax is None:
@@ -187,7 +185,7 @@ def plot_txt_curve(stats, ax=None, periods = 365, **kwargs):
     cagr = (cum_returns[-1] ** (1.0 / years)) - 1.0
     sharpe = stats['sharpe']
     sortino = np.sqrt(periods) * (np.mean(daily_returns)) / np.std(daily_returns[daily_returns < 0])
-    slope, intercept, r_value, p_value, std_err = linregress(range(cum_returns.shape[0]), cum_returns)
+    slope, intercept, r_value, p_value, std_err = linregress(range(daily_cum_returns.shape[0]), daily_cum_returns)
     rsq = r_value ** 2
     dd = stats['drawdown']
     dd_max = stats['max_drawdown']
@@ -264,8 +262,8 @@ def plot_txt_trade(stats, freq = 1, ax=None, **kwargs):
         avg_loss_pct = '{:.2%}'.format(np.mean(pos[pos["return"] <= 0]["return"]))
         max_win_pct = '{:.2%}'.format(np.max(pos["return"]))
         max_loss_pct = '{:.2%}'.format(np.min(pos["return"]))
-        max_loss_dt = np.mean(pos[pos["return"] == np.min(pos["return"])]["timedelta"])
-        avg_dit = np.mean(pos["timedelta"])
+        max_loss_dt = np.mean(pos[pos["return"] == np.min(pos["return"])]["timedelta"]).round(freq = "s")
+        avg_dit = np.mean(pos["timedelta"]).round(freq = "s")
 
     y_axis_formatter = FuncFormatter(format_perc)
     ax.yaxis.set_major_formatter(FuncFormatter(y_axis_formatter))

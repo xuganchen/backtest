@@ -109,7 +109,7 @@ class Backtest(object):
         print("---------------------------------")
 
         if self.config['is_plot'] or self.config['save_plot']:
-            self.performance.plot_results()
+            self.performance.plot_results(stats = results)
         return results
 
 

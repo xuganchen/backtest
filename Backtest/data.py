@@ -5,6 +5,7 @@ import numpy as np
 from pandas.tseries.offsets import Minute
 from Backtest.event import MarketEvent
 from Backtest.open_json_files import open_json_files
+from Backtest.open_gz_files import open_gz_files
 
 
 class DataHandler(object):
@@ -37,7 +38,7 @@ class DataHandler(object):
 
 
 class JSONDataHandler(DataHandler):
-    def __init__(self, csv_dir, freq, events_queue, tickers, start_date = None, end_date = None):
+    def __init__(self, csv_dir, freq, events_queue, tickers, start_date = None, end_date = None, trading_data = None):
         self.csv_dir = csv_dir
         self.freq = freq
         self.events_queue = events_queue
@@ -49,56 +50,55 @@ class JSONDataHandler(DataHandler):
         self.data = {}
         self.data_iter = {}
         self.latest_data = {}
-        self._open_json_files()
+        if trading_data is None:
+            self._open_gz_files()
+            # self._open_json_files()
+        else:
+            self.trading_data = trading_data
         self.generate_bars()
 
     def _open_json_files(self):
         for ticker in self.tickers:
             self.trading_data[ticker] = open_json_files(self.csv_dir, ticker)
 
+    def _open_gz_files(self):
+        for ticker in self.tickers:
+            self.trading_data[ticker] = open_gz_files(self.csv_dir, ticker)
+
 
     def generate_bars(self):
         for ticker in self.tickers:
-            unit = self.freq * Minute()
             trading_data = self.trading_data[ticker]
-            time_counter = trading_data.head(1).index[0].floor('1min')
-            records = []
-            times = []
-            while True:
-                if time_counter > trading_data.tail(1).index[0]:
-                    break
+            unit = str(self.freq) + "Min"
 
-                data = trading_data[(trading_data.index < time_counter + unit) & (trading_data.index > time_counter)]
-                if data.empty:
-                    continue
+            trading_data["open"] = trading_data["last"]
+            trading_data["high"] = trading_data["last"]
+            trading_data["low"] = trading_data["last"]
+            trading_data["close"] = trading_data["last"]
+            data = trading_data.resample(unit).agg({
+                "open": "first",
+                "high": "max",
+                "low": "min",
+                "close": "last",
+                "volume": "sum"
+            })
+            # data.loc[data['volume'] == 0, 'volume'] = np.nan
+            # data.fillna(method = 'backfill', inplace = True)
 
-                times.append(time_counter)
-                record = []
-                record.append(data['last'].head(1)[0])  # open
-                record.append(data['last'].max())  # high
-                record.append(data['last'].min())  # low
-                record.append(data['last'].tail(1)[0])  # close
-                record.append(data['volume'].sum())  # volume
-                records.append(record)
-
-                time_counter = time_counter + unit
-
-            self.times = times
-            print("Data Time Interval:")
-            if self.start_date < times[0]:
-                print("Start Date: %s" % times[0])
-            else:
-                print("Start Date: %s" % self.start_date)
-            if self.end_date > times[-1]:
-                print("End Date: %s" % times[-1])
-            else:
-                print("End Date: %s" % self.end_date)
-
-            self.data = pd.DataFrame.from_records(records, columns=['open', 'high', 'low', 'close', 'volume'],
-                                                  index=times)
-            self.data_iter[ticker] = self.data.loc[self.start_date: self.end_date].iterrows()
+            self.data[ticker] = data
+            self.data_iter[ticker] = data.loc[self.start_date: self.end_date].iterrows()
             self.latest_data[ticker] = []
 
+            self.times = data.index
+            print("Data Time Interval for %s:" % (ticker))
+            if self.start_date < self.times[0]:
+                print("\tStart Date\t: %s" % self.times[0])
+            else:
+                print("\tStart Date\t: %s" % self.start_date)
+            if self.end_date > self.times[-1]:
+                print("\tEnd Date\t: %s" % self.times[-1])
+            else:
+                print("\tEnd Date\t: %s" % self.end_date)
 
     def _get_new_bar(self, ticker):
         for row in self.data_iter[ticker]:

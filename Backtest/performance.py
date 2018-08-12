@@ -48,16 +48,18 @@ class Performance(object):
 
         # Returns
         res_returns = res_equity.pct_change().fillna(0.0)
-        res_daily_returns = np.exp(np.log(1 + res_returns).resample('D').sum().dropna())
+        res_daily_returns = res_equity.resample('D').last().pct_change().fillna(0.0)
 
-        # Rolling Annualized Sharpe
-        rolling = res_daily_returns.rolling(window = self.periods)
-        res_rolling_sharpe = np.sqrt(self.periods) * (
-            rolling.mean() / rolling.std()
+        # Rolling Monthly Sharpe
+        Monthly_periods = 30
+        rolling = res_daily_returns.rolling(window = Monthly_periods)
+        res_rolling_sharpe = np.sqrt(Monthly_periods) * (
+            rolling.mean().dropna() / rolling.std().dropna()
         )
 
         # Cummulative Returns
-        res_cum_returns = np.exp(np.log(1 + res_returns).cumsum())
+        res_cum_returns = res_equity / self.config['equity']
+        res_daily_cum_returns = res_cum_returns.resample("D").last()
 
         # Drawdown, max drawdown, max drawdown duration
         res_drawdown, res_max_dd, res_mdd_dur = self._create_drawdown(res_cum_returns)
@@ -74,6 +76,7 @@ class Performance(object):
         results['equity'] = res_equity
         results['rolling_sharpe'] = res_rolling_sharpe
         results['cum_returns'] = res_cum_returns
+        results['daily_cum_returns'] = res_daily_cum_returns
         results['drawdown'] = res_drawdown
         results['max_drawdown'] = res_max_dd
         results['max_drawdown_duration'] = res_mdd_dur
@@ -91,8 +94,8 @@ class Performance(object):
             max_win_pct = '{:.2%}'.format(np.max(positions["return"]))
             max_loss_pct = '{:.2%}'.format(np.min(positions["return"]))
             max_loss = positions[positions["return"] == np.min(positions["return"])]
-            max_loss_dt = np.mean(max_loss["timedelta"])
-            avg_dit = np.mean(positions["timedelta"])
+            max_loss_dt = np.mean(max_loss["timedelta"]).round(freq = "s")
+            avg_dit = np.mean(positions["timedelta"]).round(freq = "s")
             results['trade_info'] = {
                 "trading_num": num_trades,      # 'Trades'
                 "win_pct": win_pct_str,         # 'Trade Winning %'
@@ -120,7 +123,7 @@ class Performance(object):
         return results
 
 
-    def plot_results(self):
+    def plot_results(self, stats = None):
         self.title = self.config['title']
 
         rc = {
@@ -147,7 +150,9 @@ class Performance(object):
         fig.suptitle(self.title, y=0.94, weight='bold')
         gs = gridspec.GridSpec(vertical_sections, 3, wspace=0.25, hspace=0.5)
 
-        stats = self.get_results()
+        if stats is None:
+            stats = self.get_results()
+
         ax_equity = plt.subplot(gs[:2, :])
         ax_sharpe = plt.subplot(gs[2, :])
         ax_drawdown = plt.subplot(gs[3, :])

@@ -1,6 +1,4 @@
 
-from __future__ import print_function
-
 import datetime
 import numpy as np
 import pandas as pd
@@ -69,7 +67,7 @@ def run(config):
     backtest = Backtest(config, events_queue, strategy,
                         data_handler= data_handler)
 
-    backtest.start_trading(config)
+    backtest.start_trading()
 
 
 if __name__ == "__main__":
@@ -87,6 +85,3 @@ if __name__ == "__main__":
         "tickers": ['ETHUSDT']
     }
     run(config)
-
-
-

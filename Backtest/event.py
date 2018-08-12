@@ -61,7 +61,7 @@ class FillEvent(Event):
             self.commission = commission
 
     def calculate_commission(self):
-        commission = 0.013 * self.quantity
+        commission = 0.001 * self.quantity * self.price
         return commission
 
 
