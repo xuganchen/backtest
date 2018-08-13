@@ -51,7 +51,8 @@ def run(config):
 
     trading_data = {}
     for ticker in config['tickers']:
-        trading_data[ticker] = open_gz_files(config['csv_dir'], ticker)
+        # trading_data[ticker] = open_gz_files(config['csv_dir'], ticker)
+        trading_data[ticker] = pd.read_hdf(config['csv_dir'] + '\\' + ticker + '.h5', key=ticker)
         
     data_handler = JSONDataHandler(
         config['csv_dir'], config['freq'], events_queue, config['tickers'],
@@ -69,17 +70,18 @@ def run(config):
 
 if __name__ == "__main__":
     config = {
-        "csv_dir": "F:/Python/backtest/trades_Bitfinex_folder",
-        "out_dir": "F:/Python/backtest/backtest/results/MACDStrategy",
+        "csv_dir": "C:/backtest/trades_Bitfinex_folder",
+        "out_dir": "C:/backtest/backtest/results/MACDStrategy",
         "title": "MACDStrategy",
         "is_plot": True,
         "save_plot": True,
         "save_tradelog": True,
-        "start_date": pd.Timestamp("2018-01-01T00:0:00", freq = "1" + "T"),    # str(freq) + "T"
-        "end_date": pd.Timestamp("2018-07-25T00:00:00", freq = "1" + "T"),
+        "start_date": pd.Timestamp("2017-01-01T00:0:00", freq = "1" + "T"),    # str(freq) + "T"
+        "end_date": pd.Timestamp("2018-09-01T00:00:00", freq = "1" + "T"),
         "equity": 500.0,
-        "freq": 1,      # min
-        "commission": 0.001, 
+        "freq": 60,      # min
+        "commission_ratio": 0.001,
         "tickers": ['ETHUSD']
     }
     backtest, results = run(config)
+    results['equity'].to_csv('C:\\backtest\\backtest\\backtrader\\equity.csv')
