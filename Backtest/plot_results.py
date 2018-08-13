@@ -10,6 +10,9 @@ import seaborn as sns
 
 
 def plot_equity(stats, ax=None, log_scale=False, **kwargs):
+    '''
+    Plots cumulative rolling returns
+    '''
     def format_two_dec(x, pos):
         return '%.2f' % x
 
@@ -42,6 +45,9 @@ def plot_equity(stats, ax=None, log_scale=False, **kwargs):
 
 
 def plot_rolling_sharpe(stats, ax=None, **kwargs):
+    '''
+    Plots the curve of rolling Sharpe ratio.
+    '''
     def format_two_dec(x, pos):
         return '%.2f' % x
 
@@ -71,6 +77,9 @@ def plot_rolling_sharpe(stats, ax=None, **kwargs):
 
 
 def plot_drawdown(stats, ax=None, **kwargs):
+    '''
+    Plots the underwater curve
+    '''
     def format_perc(x, pos):
         return '%.0f%%' % x
 
@@ -97,6 +106,9 @@ def plot_drawdown(stats, ax=None, **kwargs):
 
 
 def plot_monthly_returns(stats, ax=None, **kwargs):
+    '''
+    Plots a heatmap of the monthly returns.
+    '''
     returns = stats['returns']
     if ax is None:
         ax = plt.gca()
@@ -130,6 +142,9 @@ def plot_monthly_returns(stats, ax=None, **kwargs):
 
 
 def plot_yearly_returns(stats, ax=None, **kwargs):
+    '''
+    Plots a barplot of returns by year.
+    '''
     def format_perc(x, pos):
         return '%.0f%%' % x
 
@@ -235,6 +250,9 @@ def plot_txt_curve(stats, ax=None, periods = 365, **kwargs):
 
 
 def plot_txt_trade(stats, freq = 1, ax=None, **kwargs):
+    '''
+    Outputs the statistics for the trades.
+    '''
     def format_perc(x, pos):
         return '%.0f%%' % x
 
@@ -311,6 +329,9 @@ def plot_txt_trade(stats, freq = 1, ax=None, **kwargs):
 
 
 def plot_txt_time(stats, ax=None, **kwargs):
+    '''
+    Outputs the statistics for various time frames.
+    '''
     def format_perc(x, pos):
         return '%.0f%%' % x
 

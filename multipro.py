@@ -65,6 +65,7 @@ if __name__ == '__main__':
         "equity": 100000.0,
         "freq": 1,  # min
         "commission_ratio": 0.001,
+        "exchange": the exchange
         "tickers": ['ETHUSD']  # , 'BCHUSD', 'BCHBTC', 'BCHETH', 'EOSBTC']
         # "tickers": ['BCCBTC', 'BCCUSD', 'BCHBTC', 'BCHETH', 'BCHUSD',
         #             'ELFBTC', 'ELFETH', 'ELFUSD', 'EOSBTC', 'EOSETH',

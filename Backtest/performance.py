@@ -11,7 +11,17 @@ from Backtest.plot_results import *
 
 
 class Performance(object):
+    '''
+    Calculating the backtest results and ploting the results.
+    '''
     def __init__(self, config, portfolio_handler, data_handler, periods = 365):
+        '''
+        Parameters:
+        config: the list of settings showed in Backtest
+        portfolio_handler: class PortfolioHandler
+        data_handler: class OHLCDataHandler
+        periods: trading day of the year
+        '''
         self.config = config
         self.portfolio_handler = portfolio_handler
         self.data_handler = data_handler
@@ -19,9 +29,15 @@ class Performance(object):
         self.periods = periods
 
     def update(self, timestamp):
+        '''
+        Update performance's equity for every tick
+        '''
         self.equity[timestamp] = self.portfolio_handler.equity
 
     def _create_drawdown(self, cum_returns):
+        '''
+        Calculate drawdown
+        '''
         idx = cum_returns.index
         hwm = np.zeros(len(idx))
 
@@ -43,6 +59,33 @@ class Performance(object):
             return pd.DataFrame(positions)
 
     def get_results(self):
+        """
+        Return a dict with all important results & stats.
+        
+        includings:
+            results['returns']
+            results['daily_returns']
+            results['equity']
+            results['rolling_sharpe']
+            results['cum_returns']
+            results['daily_cum_returns']
+            results['drawdown']
+            results['max_drawdown']
+            results['max_drawdown_duration']
+            results['sharpe']
+            results['positions']
+            results['trade_info'] = {
+                "trading_num": 'Trades Number'
+                "win_pct": 'Trade Winning %'
+                "avg_trd_pct": 'Average Trade %'
+                "avg_win_pct": 'Average Win %'
+                "avg_loss_pct": 'Average Loss %'
+                "max_win_pct": 'Best Trade %'
+                "max_loss_pct": 'Worst Trade %'
+                "max_loss_dt": 'Worst Trade Date'
+                "avg_dit": 'Avg Days in Trade'
+            }
+        """
         # Equity
         res_equity = pd.Series(self.equity).sort_index()
 
@@ -124,6 +167,12 @@ class Performance(object):
 
 
     def plot_results(self, stats = None):
+        '''
+        Plot the results
+        
+        Parameters:
+        stats = self.get_results()
+        '''
         self.title = self.config['title']
 
         rc = {

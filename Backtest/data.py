@@ -9,36 +9,90 @@ from Backtest.open_gz_files import open_gz_files
 
 
 class DataHandler(object):
+    '''
+    Handling the work related to DATA.
+    DataHandler is base class providing an interface for all subsequent data handler.
+    '''
     __metaclass__ = ABCMeta
 
     @abstractmethod
     def get_latest_bar(self, ticker):
+        '''
+        Get the latest bar information for ticker,
+        '''
         raise NotImplementedError("Should implement get_latest_bar()")
 
     @abstractmethod
     def get_latest_bars(self, ticker, N = 1):
+        '''
+        Get the latest N bar information for ticker
+        '''
         raise NotImplementedError("Should implement get_latest_bars()")
 
     @abstractmethod
     def get_latest_bar_datetime(self, ticker):
+        '''
+        Get the latest datetime
+        '''
         raise NotImplementedError("Should implement get_latest_bar_datetime()")
 
     @abstractmethod
     def get_latest_bar_value(self, ticker, val_type):
+        '''
+        Get the lastest bar's val_type
+        '''
         raise NotImplementedError("Should implement get_latest_bar_value()")
 
     @abstractmethod
     def get_latest_bars_values(self, ticker, val_type, N = 1):
+        '''
+        Get the lastest N bar's val_type
+        '''
         raise NotImplementedError("Should implement get_latest_bars_values()")
 
     @abstractmethod
     def update_bars(self):
+        '''
+        Update timeline for data 
+        and generate MARKET event for each ticker
+        '''
         raise NotImplementedError("Should implement update_bars()")
 
 
 
-class JSONDataHandler(DataHandler):
-    def __init__(self, csv_dir, freq, events_queue, tickers, start_date = None, end_date = None, trading_data = None, data = None):
+class OHLCDataHandler(DataHandler):
+    '''
+    Handling the work related to DATA.
+    The data format is "ticker timestamp open high low close"(OHLC)
+    '''
+    def __init__(self, csv_dir, freq, events_queue, tickers, start_date, 
+                end_date, trading_data = None, ohlc_data = None):
+        '''
+        Parameters:
+        csv_dir: input data path,
+        freq: the frequency in config, timedelta between every two bar
+        events_queue: the event queue
+        tickers: the list of trading digital currency
+        start_date: strat datetime of backtesting
+        end_date: end datetime of backtesting
+        trading_data: transaction data
+            dict - trading_data[ticker] = df_ticker
+                df_ticker = pd.DataFrame(index = "pd.timestamp", 
+                                        columns = ["volume", "last"])
+        ohlc_data: ohlc data
+            dict - ohlc_data[ticker] = df_ticker
+                df_ticker = pd.DataFrame(index = "pd.timestamp", 
+                    columns = ["open", "high", "low", "close", "volume"])
+        '''
+        '''
+        self.continue_backtest: the condition whether can continue backtesting,
+                                determined by timeline
+        self.trading_data = trading_data
+        self.data = ohlc_data
+        self.data_iter: for each ticker, the iterator of data DataFrame
+        self.latest_data: for each ticker, past time data
+        self.times: the time series of all time
+        '''
         self.csv_dir = csv_dir
         self.freq = freq
         self.events_queue = events_queue
@@ -52,16 +106,16 @@ class JSONDataHandler(DataHandler):
         self.latest_data = {}
         self.times = pd.Series()
         
-        if trading_data is None:
-            self._open_gz_files()
-            # self._open_json_files()
-        else:
+        if trading_data is None and ohlc_data is None:
+            raise ValueError("Should input trading_data or ohlc_data")
+
+        if trading_data is not None:
             self.trading_data = trading_data
 
-        if data is None:
+        if ohlc_data is None:
             self.generate_bars()
         else:
-            self.data = data
+            self.data = ohlc_data
 
         for ticker in self.tickers:
             self.data_iter[ticker] = self.data[ticker].loc[self.start_date: self.end_date].iterrows()
@@ -83,8 +137,6 @@ class JSONDataHandler(DataHandler):
             self.times = self.times.sort_index()
 
 
-
-
     def _open_json_files(self):
         for ticker in self.tickers:
             self.trading_data[ticker] = open_json_files(self.csv_dir, ticker)
@@ -95,6 +147,9 @@ class JSONDataHandler(DataHandler):
 
 
     def generate_bars(self):
+        '''
+        for each ticker, organize transaction data into OHLC data
+        '''
         for ticker in self.tickers:
             trading_data = self.trading_data[ticker]
             unit = str(self.freq) + "Min"
@@ -114,52 +169,73 @@ class JSONDataHandler(DataHandler):
             data.fillna(method = 'backfill', inplace = True)
 
             self.data[ticker] = data
-            # self.data_iter[ticker] = data.loc[self.start_date: self.end_date].iterrows()
-            # self.latest_data[ticker] = []
-
-            # times = data.index
-            # print("Data Time Interval for %s:" % (ticker))
-            # if self.start_date < times[0]:
-            #     print("\tStart Date\t: %s" % self.times[0])
-            # else:
-            #     print("\tStart Date\t: %s" % self.start_date)
-            # if self.end_date > times[-1]:
-            #     print("\tEnd Date\t: %s" % self.times[-1])
-            # else:
-            #     print("\tEnd Date\t: %s" % self.end_date)
-
-            # times = times.to_series()
-            # self.times = pd.concat([self.times, times]).drop_duplicates()
-            # self.times = self.times.sort_index()
-
-
 
     def _get_new_bar(self, ticker):
+        """
+        iterate the data for ticker
+        """
         for row in self.data_iter[ticker]:
             yield row
 
     def get_latest_bar(self, ticker):
+        '''
+        Get the latest bar information for ticker,
+        return a N-row dict:
+            {"timestamp",
+            ["open", "high", "low", "close", "volume"]}
+        '''
         latest_data = self.latest_data[ticker]
         return latest_data[ticker][-1]
 
     def get_latest_bars(self, ticker, N = 1):
+        '''
+        Get the latest N bar information for ticker,
+        return a 1-row dict:
+            {"timestamp",
+            ["open", "high", "low", "close", "volume"]}
+        '''
         latest_data = self.latest_data[ticker]
         return latest_data[-N:]
 
     def get_latest_bar_datetime(self, ticker):
+        '''
+        Get the latest datetime
+        return timestamp
+        '''
         latest_data = self.latest_data[ticker]
         return latest_data[-1][0]
 
     def get_latest_bar_value(self, ticker, val_type):
+        '''
+        Get the lastest bar's val_type
+        return float
+        
+        Parameters:
+        val_type: in ["open", "high", "low", "close", "volume"]
+        '''
         latest_data = self.latest_data[ticker]
         return getattr(latest_data[-1][1], val_type)
 
     def get_latest_bars_values(self, ticker, val_type, N = 1):
+        '''
+        Get the lastest N bar's val_type
+        return np.array
+        
+        Parameters:
+        val_type: in ["open", "high", "low", "close", "volume"]
+        '''
         bars_list = self.get_latest_bars(ticker, N)
         return np.array([getattr(bar[1], val_type) for bar in bars_list])
 
 
     def update_bars(self):
+        '''
+        Update timeline for data 
+        and generate MARKET event for each ticker
+
+        If time is up, set continue_backtest = False
+        and finish the backtest
+        '''
         for ticker in self.tickers:
             try:
                 bar = next(self._get_new_bar(ticker))
@@ -175,5 +251,5 @@ class JSONDataHandler(DataHandler):
                 low = getattr(bar[1], "low")
                 volume = getattr(bar[1], "volume")
                 freq = self.freq
-                market_event = MarketEvent(ticker, timestamp, open, high, close, low, volume, freq)
+                market_event = MarketEvent(ticker, timestamp, open, high, low, close, volume, freq)
                 self.events_queue.put(market_event)

@@ -1,16 +1,65 @@
 import queue
 
 from Backtest.portfolio import PortfolioHandler
-from Backtest.data import JSONDataHandler
+from Backtest.data import OHLCDataHandler
 from Backtest.execution import SimulatedExecutionHandler
 from Backtest.performance import Performance
 from Backtest.compliance import Compliance
 from Backtest.event import EventType
 
 class Backtest(object):
-    def __init__(self, config, events_queue, strategy,
-                 data_handler = None, portfolio_handler = None,
-                 execution_handler = None, performance = None, compliance = None):
+    '''
+    the cerebrum of the backtesting system, running the event-loop calculation
+    '''
+    def __init__(self, config, events_queue, strategy, data_handler,
+                 portfolio_handler = None, execution_handler = None, 
+                 performance = None, compliance = None):
+        '''
+        Parameters:
+        config: settings.
+            {
+            "csv_dir": input data path, 
+            "out_dir": outputdata path,,
+            "title": the title of strategy,
+            "is_plot": whether plotting the result, True or False,
+            "save_plot": whether saving the result, True or False,
+            "save_tradelog": whether saving the trading log, True or False, 
+            "start_date": pd.Timestamp("xxxx-xx-xxTxx:xx:xx", freq= str("freq") + "T"), 
+                        strat datetime of backtesting
+            "end_date": pd.Timestamp("xxxx-xx-xxTxx:xx:xx", freq= str("freq") + "T"), 
+                        end datetime of backtesting
+            "equity": initial funding,
+            "freq": the frequency of backtesting,  a integer in minutes,
+            "commission_ratio": the commission ratio of transaction, 
+                                and the commission is "ratio * price * quantity"
+            "exchange": the exchange
+            "tickers": the list of trading digital currency.
+            }
+
+        events_queue: the event queue.
+            queue.Queue()
+
+        strategy: specific strategies adopted by users.
+            class xxxxStrategy inherit from class Strategy
+
+        data_handler: handling the work related to DATA, 
+                      including inputting data, converting data, and updating tick data.
+            class OHLCDataHandler
+
+        portfolio_handler: handling situation of the positions 
+                           and generates orders based on signals.
+            class PortfolioHandler
+
+        execution_handler: handling execution of orders. 
+                           It represent a simulated order handling mechanism.
+            class SimulatedExecutionHandler
+
+        performance: calculating the backtest results and ploting the results.
+            class Performance
+
+        compliance: recording transaction information.
+            class Compliance
+        '''
         self.config = config
         self.freq = config['freq']
         self.strategy = strategy
@@ -25,14 +74,13 @@ class Backtest(object):
         self.performance = performance
         self.compliance = compliance
         self._config_backtest()
-        self.cur_time = None
 
     def _config_backtest(self):
-        if self.data_handler is None:
-            self.data_handler = JSONDataHandler(
-                self.config['csv_dir'], self.freq, self.events_queue, self.tickers,
-                start_date = self.start_date, end_date = self.end_date
-            )
+        '''
+        Initialize the four class parameter, including 
+            portfolio_handler, execution_handlerNone, performance and compliance.
+        '''
+
         if self.portfolio_handler is None:
             self.portfolio_handler = PortfolioHandler(
                 self.data_handler, self.events_queue,
@@ -53,46 +101,80 @@ class Backtest(object):
             )
 
     def _continue_loop_condition(self):
+        '''
+        Determine whether can continue to test back.
+        '''
         return self.data_handler.continue_backtest
 
 
     def _run_backtest(self):
+        '''
+        Main circulation department for event-driven backtest
+        '''
         print("---------------------------------")
         print("Running Backtest...")
         print("---------------------------------")
-        i = 0
-        while self._continue_loop_condition():
-            i += 1
-            # if i == 100:
-            #     break
-            # print(i)
-            self.data_handler.update_bars()
-            while True:
+        while self._continue_loop_condition():          
+            # update timeline for data and generate MARKET event for each ticker
+            self.data_handler.update_bars()             
+            # run the loop forever
+            while True:                                 
                 try:
-                    event = self.events_queue.get(False)
+                    # get the latest event
+                    event = self.events_queue.get(False)    
                 except queue.Empty:
-                    break
+                    # until no new event
+                    break                                   
                 else:
                     if event is not None:
-                        if event.type == EventType.MARKET:
-                            self.strategy.generate_signals(event)
-                            self.portfolio_handler.update_timeindex(event)
-                            self.performance.update(event.timestamp)
+                        if event.type == EventType.MARKET:                  
+                            '''
+                            if it is a MARKET event:
+                            # determine if there is a trading signal 
+                              and generate the SIGNAL event
+                            # update timeline for portfolio
+                            # update performance's equity for every tick
+                            '''
+                            self.strategy.generate_signals(event)           
+                            self.portfolio_handler.update_timeindex(event)  
+                            self.performance.update(event.timestamp)        
 
-                        if event.type == EventType.SIGNAL:
-                            self.portfolio_handler.update_signal(event)
+                        if event.type == EventType.SIGNAL:                  
+                            '''
+                            if it is a SIGNAL event:
+                            # generate the ORDER event
+                            '''
+                            self.portfolio_handler.update_signal(event)     
 
-                        if event.type == EventType.ORDER:
-                            self.execution_handler.execute_order(event)
+                        if event.type == EventType.ORDER:                   
+                            '''
+                            if it is a ORDER event:
+                            # execute the order, 
+                              record the order 
+                              and generate the FILL event
+                            '''
+                            self.execution_handler.execute_order(event)     
 
-                        if event.type == EventType.FILL:
-                            self.portfolio_handler.update_fill(event)
+                        if event.type == EventType.FILL:                    
+                            '''
+                            # if it is a FILL event:
+                            # update portfolio after ordering
+                            '''
+                            self.portfolio_handler.update_fill(event)  
+
         print("---------------------------------")
         print("Backtest complete.")
         print("---------------------------------")
 
     def _output_performance(self):
-        results = self.performance.get_results()
+        '''
+        Calculating the backtest results and ploting the results.
+
+        return:
+        results: a dict with all important results & stats.
+        '''
+        # calculating the backtest results 
+        results = self.performance.get_results()                                    
         print("Sharpe Ratio: %0.10f" % results['sharpe'])
         print("Max Drawdown: %0.10f" % (results["max_drawdown"] * 100.0))
         print("Max Drawdown Duration: %d" % (results['max_drawdown_duration']))
@@ -109,12 +191,16 @@ class Backtest(object):
         print("Avg Days in Trade: %s" % results['trade_info']['avg_dit'])
         print("---------------------------------")
 
+        # ploting the results.
         if self.config['is_plot'] or self.config['save_plot']:
-            self.performance.plot_results(stats = results)
+            self.performance.plot_results(stats = results)                    
         return results
 
 
-    def start_trading(self):
+    def start_trading(self):        
+        '''
+        Start trading()
+        '''
         self._run_backtest()
         results = self._output_performance()
         return results

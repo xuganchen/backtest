@@ -5,7 +5,7 @@ import queue
 from Backtest.strategy import Strategy
 from Backtest.event import EventType
 from Backtest.backtest import Backtest
-from Backtest.data import JSONDataHandler
+from Backtest.data import OHLCDataHandler
 from Backtest.open_gz_files import open_gz_files
 
 
@@ -54,7 +54,7 @@ def run(config):
         # trading_data[ticker] = open_gz_files(config['csv_dir'], ticker)
         trading_data[ticker] = pd.read_hdf(config['csv_dir'] + '\\' + ticker + '.h5', key=ticker)
         
-    data_handler = JSONDataHandler(
+    data_handler = OHLCDataHandler(
         config['csv_dir'], config['freq'], events_queue, config['tickers'],
         start_date=config['start_date'], end_date=config['end_date'], trading_data = trading_data
     )
@@ -76,12 +76,12 @@ if __name__ == "__main__":
         "is_plot": True,
         "save_plot": True,
         "save_tradelog": True,
-        "start_date": pd.Timestamp("2017-01-01T00:0:00", freq = "1" + "T"),    # str(freq) + "T"
-        "end_date": pd.Timestamp("2018-09-01T00:00:00", freq = "1" + "T"),
+        "start_date": pd.Timestamp("2017-01-01T00:0:00", freq = "60" + "T"),    # str(freq) + "T"
+        "end_date": pd.Timestamp("2018-09-01T00:00:00", freq = "60" + "T"),
         "equity": 500.0,
         "freq": 60,      # min
         "commission_ratio": 0.001,
+        "exchange": "Binance",
         "tickers": ['ETHUSD']
     }
     backtest, results = run(config)
-    results['equity'].to_csv('C:\\backtest\\backtest\\backtrader\\equity.csv')
