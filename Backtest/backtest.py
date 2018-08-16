@@ -11,9 +11,9 @@ class Backtest(object):
     '''
     the cerebrum of the backtesting system, running the event-loop calculation
     '''
-    def __init__(self, config, events_queue, strategy, data_handler,
-                 portfolio_handler = None, execution_handler = None, 
-                 performance = None, compliance = None):
+    def __init__(self, config, events_queue, strategy, data_handler, 
+                portfolio_handler = None, execution_handler = None, 
+                performance = None, compliance = None):
         '''
         Parameters:
         config: settings.
@@ -62,12 +62,12 @@ class Backtest(object):
         '''
         self.config = config
         self.freq = config['freq']
-        self.strategy = strategy
         self.tickers = config['tickers']
         self.equity = config['equity']
         self.start_date = config['start_date']
         self.end_date = config['end_date']
         self.events_queue = events_queue
+        self.strategy = strategy
         self.data_handler = data_handler
         self.portfolio_handler = portfolio_handler
         self.execution_handler = execution_handler
@@ -80,11 +80,10 @@ class Backtest(object):
         Initialize the four class parameter, including 
             portfolio_handler, execution_handlerNone, performance and compliance.
         '''
-
+        
         if self.portfolio_handler is None:
             self.portfolio_handler = PortfolioHandler(
-                self.data_handler, self.events_queue,
-                self.start_date, self.equity
+                self.config, self.data_handler, self.events_queue
             )
         if self.compliance is None:
             self.compliance = Compliance(
@@ -116,7 +115,7 @@ class Backtest(object):
         print("---------------------------------")
         while self._continue_loop_condition():          
             # update timeline for data and generate MARKET event for each ticker
-            self.data_handler.update_bars()             
+            now_time = self.data_handler.update_bars()             
             # run the loop forever
             while True:                                 
                 try:
@@ -132,12 +131,8 @@ class Backtest(object):
                             if it is a MARKET event:
                             # determine if there is a trading signal 
                               and generate the SIGNAL event
-                            # update timeline for portfolio
-                            # update performance's equity for every tick
                             '''
-                            self.strategy.generate_signals(event)           
-                            self.portfolio_handler.update_timeindex(event)  
-                            self.performance.update(event.timestamp)        
+                            self.strategy.generate_signals(event)            
 
                         if event.type == EventType.SIGNAL:                  
                             '''
@@ -161,6 +156,11 @@ class Backtest(object):
                             # update portfolio after ordering
                             '''
                             self.portfolio_handler.update_fill(event)  
+
+            # update timeline for portfolio
+            self.portfolio_handler.update_timeindex(now_time) 
+            # update performance's equity for every tick
+            self.performance.update(now_time)        
 
         print("---------------------------------")
         print("Backtest complete.")

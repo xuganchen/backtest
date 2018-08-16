@@ -10,24 +10,24 @@ class Strategy(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def __init__(self, bars, events, suggested_quantity):
+    def __init__(self, config, events, data_handler):
         '''
         Parameters:
-        bars: class OHLCDataHandler
+        data_handler: class OHLCDataHandler
         events: the event queue
         suggested_quantity: Optional positively valued integer
             representing a suggested absolute quantity of units
             of an asset to transact in
         '''
-        self.bars = bars
-        self.symbol_list = self.bars.tickers
+        self.config = config
+        self.data_handler = data_handler
+        self.tickers = self.config['tickers']
         self.events = events
-        self.suggested_quantity = suggested_quantity
     #     self.holdinds = self._calculate_initial_holdings()
     #
     # def _calculate_initial_holdings(self):
     #     holdings = {}
-    #     for s in self.symbol_list:
+    #     for s in self.tickers:
     #         holdings[s] = "EMPTY"
     #     return holdings
 
@@ -53,7 +53,7 @@ class Strategy(object):
         and generate LONG(buy) signal
         '''
         # print("%s: %s, %s" % (ticker, str, bar_date))
-        signal = SignalEvent(ticker, "LONG", self.suggested_quantity, str)
+        signal = SignalEvent(ticker, "LONG", str)
         self.events.put(signal)
 
     def generate_sell_signals(self, ticker, bar_date, str):
@@ -63,5 +63,5 @@ class Strategy(object):
         and generate SHORT(sell) signal
         '''
         # print("%s: %s, %s" % (ticker, str, bar_date))
-        signal = SignalEvent(ticker, "SHORT", self.suggested_quantity, str)
+        signal = SignalEvent(ticker, "SHORT", str)
         self.events.put(signal)

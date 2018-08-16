@@ -1,4 +1,8 @@
 from abc import ABCMeta, abstractmethod
+import sys
+import math
+import numpy as np
+import pandas as pd
 
 from Backtest.event import FillEvent, OrderEvent
 from Backtest.event import EventType
@@ -41,7 +45,7 @@ class Portfolio(object):
 
 
 class PortfolioHandler(Portfolio):
-    def __init__(self, data_handler, events, start_date, equity):
+    def __init__(self, config, data_handler, events):
         '''
         Parameters:
         data_handler: class OHLCDataHandler
@@ -86,17 +90,39 @@ class PortfolioHandler(Portfolio):
                 "commission_buy", "commission_sell"
             }
         '''
+        self.config = config
+        self.start_date = config['start_date']
+        self.equity = config['equity']
         self.data_handler = data_handler
         self.events = events
-        self.start_date = start_date
-        self.equity = equity
-        self.tickers = self.data_handler.tickers
+        self.tickers = self.config['tickers']
+
+        if self.config['min_handheld_cash'] is None:
+            self.min_handheld_cash = 0
+        else:
+            self.min_handheld_cash = self.config['min_handheld_cash']
+
+        if self.config['max_quantity'] is None:
+            self.max_quantity = sys.maxsize
+        else:
+            self.max_quantity = self.config['max_quantity']
+
+        if self.config['min_quantity'] is None:
+            self.min_quantity = -sys.maxsize-1
+        else:
+            self.max_quantity = self.config['min_quantity']
+
+        if self.config['commission_ratio'] is None:
+            self.commission_ratio = 0.001
+        else:
+            self.commission_ratio = self.config['commission_ratio']
 
         self.all_positions = self._construct_all_positions()
         self.current_positions = self._construct_current_positions()
 
         self.all_holdings = self._construct_all_holdings()
         self.current_holdings = self._construct_current_holdings()
+        self.cash_for_order = self.equity
 
         self.current_tickers = []
         self.current_tickers_info = {}
@@ -137,16 +163,10 @@ class PortfolioHandler(Portfolio):
         d['total'] = self.equity
         return d
 
-    def update_timeindex(self, event):
+    def update_timeindex(self, lasest_datetime):
         '''
-        Update the self.all_positions and self.all_holdings
-        from the MARKET event
-
-        Parameters:
-        event: class MarketEvent
+        Update the self.all_positions and self.all_holdings for each tick time
         '''
-
-        lasest_datetime = self.data_handler.get_latest_bar_datetime(event.ticker)
 
         # Update positions
         dposition = dict([(ticker, {}) for ticker in self.tickers])
@@ -163,11 +183,13 @@ class PortfolioHandler(Portfolio):
         dholding['total'] = self.current_holdings['cash']
         for ticker in self.tickers:
             market_value = self.current_positions[ticker] * \
-                self.data_handler.get_latest_bar_value(event.ticker, "close")
+                self.data_handler.get_latest_bar_value(ticker, "close")
             dholding[ticker] = market_value
             dholding['total'] += market_value
         self.equity = dholding['total']
+        self.cash_for_order = self.current_holdings['cash']
         self.all_holdings.append(dholding)
+
 
     def _update_positions_from_fill(self, event):
         '''
@@ -187,10 +209,8 @@ class PortfolioHandler(Portfolio):
         event: class FillEvent
         '''
         action_dir = {"LONG": 1, "SHORT": -1}
-        action_dir.get(event.action, 0)
         action = action_dir.get(event.action, 0)
-        event_cost = self.data_handler.get_latest_bar_value(event.ticker, "close")
-        cost = action * event_cost * event.quantity
+        cost = action * event.price * event.quantity
         self.current_holdings[event.ticker] += cost
         self.current_holdings['commission'] += event.commission
         self.current_holdings['cash'] -= (cost + event.commission)
@@ -220,6 +240,8 @@ class PortfolioHandler(Portfolio):
             closed = {
                 "ticker": closed_info['ticker'],
                 "quantity": closed_info['quantity'],
+                "buy_price": closed_info['price'],
+                "sell_price": event.price,
                 "earning": (event.price - closed_info['price']) * closed_info['quantity'],
                 "return": (event.price - closed_info['price']) / closed_info['price'],
                 "timedelta": event.timestamp - closed_info['timestamp'],
@@ -243,6 +265,8 @@ class PortfolioHandler(Portfolio):
             closed = {
                 "ticker": closed_info['ticker'],
                 "quantity": closed_info['quantity'],
+                "buy_price": closed_info['price'],
+                "sell_price": event.price,
                 "earning": (event.price - closed_info['price']) * closed_info['quantity'],
                 "return": (closed_info['price'] - event.price) / closed_info['price'],
                 "timedelta": event.timestamp - closed_info['timestamp'],
@@ -263,9 +287,10 @@ class PortfolioHandler(Portfolio):
             self._update_holdings_from_fill(event)
             self._update_closed_postions_from_fill(event)
 
-    def _generate_order(self, event):
+    
+    def _generate_long_order(self, event):
         '''
-        Generate the ORDER event from the SIGNAL event
+        Generate the LONG ORDER event from the SIGNAL event
 
         Parameters:
         event: class SignalEvent
@@ -276,13 +301,67 @@ class PortfolioHandler(Portfolio):
         ticker = event.ticker
         action = event.action
         trade_mark = event.trade_mark
+        event_price = self.data_handler.get_latest_bar_value(event.ticker, "close")
 
-        if event.suggested_quantity is None:
-            quantity = 0
+        if event.ticker not in self.current_tickers and event.action == "LONG":
+            if self.config['suggested_quantity'] is not None:
+                quantity = self.config['suggested_quantity']
+            else:
+                cash = self.cash_for_order - self.min_handheld_cash
+                # quantity_pro = self._get_floor_round((cash * (1 - self.commission_ratio)) / (event_price), 6)
+                quantity_pro = (cash * (1 - self.commission_ratio)) / (event_price)
+                quantity = np.clip(quantity_pro, self.min_quantity, self.max_quantity)
+        elif event.ticker in self.current_tickers and event.action == "LONG":
+            quantity = self.current_tickers_info[ticker]['quantity']
+
+        commission = self.commission_ratio * (quantity * event_price / (1-self.commission_ratio))
+
+        if quantity > 0:
+            order_event = OrderEvent(ticker, action, quantity, trade_mark, commission)
+
+            event_price = self.data_handler.get_latest_bar_value(event.ticker, "close")
+            self.cash_for_order -= (event_price * quantity) / (1-self.commission_ratio)
+
+            return order_event
         else:
-            quantity = event.suggested_quantity
+            return None
 
-        order_event = OrderEvent(ticker, action, quantity, trade_mark)
+    def _get_floor_round(self, num, pre):
+        precision = np.power(10, pre)
+        return math.floor(num * precision) / precision
+
+    def _generate_short_order(self, event):
+        '''
+        Generate the SHORT ORDER event from the SIGNAL event
+
+        Parameters:
+        event: class SignalEvent
+
+        return:
+        order_event: class OrderEvent
+        '''
+        ticker = event.ticker
+        action = event.action
+        trade_mark = event.trade_mark
+        event_price = self.data_handler.get_latest_bar_value(event.ticker, "close")
+
+        if event.ticker in self.current_tickers and event.action == "SHORT":
+            quantity = self.current_tickers_info[ticker]['quantity']
+        elif event.ticker not in self.current_tickers and event.action == "SHORT":
+            if self.config['suggested_quantity'] is not None:
+                quantity = self.config['suggested_quantity']
+            else:
+                cash = self.cash_for_order - self.min_handheld_cash
+                # quantity_pro = self._get_floor_round((cash * (1 - self.commission_ratio)) / (event_price), 6)
+                quantity_pro = (cash * (1 - self.commission_ratio)) / (event_price)
+                quantity = np.clip(quantity_pro, self.min_quantity, self.max_quantity)
+
+        commission = self.commission_ratio * (quantity * event_price)
+
+        order_event = OrderEvent(ticker, action, quantity, trade_mark, commission)
+
+        self.cash_for_order += (event_price * quantity) * (1-self.commission_ratio)
+        
         return order_event
 
     def update_signal(self, event):
@@ -293,5 +372,15 @@ class PortfolioHandler(Portfolio):
         event: class SignalEvent
         '''
         if event.type == EventType.SIGNAL:
-            order_event = self._generate_order(event)
-            self.events.put(order_event)
+            if event.action == "LONG":
+                if self.cash_for_order <= self.min_handheld_cash:
+                    return
+                else:
+                    order_event = self._generate_long_order(event)
+                    if order_event is not None:
+                        self.events.put(order_event) 
+                    else:
+                        return
+            elif event.action == "SHORT":
+                order_event  = self._generate_short_order(event)
+                self.events.put(order_event)

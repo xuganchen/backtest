@@ -1,4 +1,0 @@
-RSIStrategy_96_80_40,tickers,['BTCUSDT'],initial equity,100000.0,frequency,60 min
-Start date,2017-05-01 00:00:00,End date,2018-04-01 00:00:00
-timestamp,ticker,action,quantity,exchange,price,commission
-2017-10-28 11:00:00,BTCUSDT,LONG,100,Binance,5680.28,568.028

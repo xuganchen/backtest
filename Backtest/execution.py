@@ -30,6 +30,7 @@ class SimulatedExecutionHandler(ExecutionHandler):
         data_handler: class OHLCDataHandler
         compliance: class Compliance
         '''
+        self.config = config
         self.events = events
         self.data_handler = date_handler
         self.compliance = compliance
@@ -51,10 +52,7 @@ class SimulatedExecutionHandler(ExecutionHandler):
             exchange = self.config['exchange']
             price = self.data_handler.get_latest_bar_value(ticker, "close")
             trade_mark = event.trade_mark
-            if self.config['commission_ratio'] is not None:
-                commission = self.config['commission_ratio']
-            else:
-                commission = None
+            commission = event.commission
             fill_event = FillEvent(timestamp, ticker, action, quantity, exchange, price, trade_mark, commission)
             self.events.put(fill_event)
 

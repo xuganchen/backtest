@@ -24,6 +24,7 @@ class Compliance(AbstractCompliance):
         Parameters:
         config: the list of settings showed in Backtest
         '''
+        self.config = config
         self.out_dir = config['out_dir']
         self.title = config['title']
         self.config = config
@@ -58,6 +59,8 @@ class Compliance(AbstractCompliance):
                 writer = csv.DictWriter(file, fieldnames = fieldnames)
                 writer.writeheader()
 
+        # print("ticker: action, timestamp, price, quantity")
+
     def record_trade(self, fillevent):
         '''
         If ordering, record the trade into the log
@@ -75,3 +78,5 @@ class Compliance(AbstractCompliance):
                     fillevent.exchange, fillevent.price,
                     fillevent.commission
                 ])
+        # print("%s: %s, %s, %.2f, %.6f" % (fillevent.ticker, fillevent.trade_mark,
+        #                             fillevent.timestamp, fillevent.price, fillevent.quantity))

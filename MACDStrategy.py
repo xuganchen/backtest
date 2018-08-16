@@ -1,6 +1,9 @@
+
+from multiprocessing import Pool
 import numpy as np
 import pandas as pd
 import queue
+import os
 
 from Backtest.strategy import Strategy
 from Backtest.event import EventType
@@ -12,12 +15,12 @@ from Backtest.generate_bars import generate_bars
 
 
 class MACDStrategy(Strategy):
-    def __init__(self, bars, events, suggested_quantity = 1,
+    def __init__(self, config, events, data_handler,
                  short_window = 10, long_window = 40):
-        self.bars = bars
-        self.symbol_list = self.bars.tickers
+        self.config = config
+        self.data_handler = data_handler
+        self.tickers = self.config['tickers']
         self.events = events
-        self.suggested_quantity = suggested_quantity
         self.holdinds = self._calculate_initial_holdings()
 
         self.short_window = short_window
@@ -25,14 +28,14 @@ class MACDStrategy(Strategy):
 
     def _calculate_initial_holdings(self):
         holdings = {}
-        for s in self.symbol_list:
+        for s in self.tickers:
             holdings[s] = "EMPTY"
         return holdings
 
     def generate_signals(self, event):
         if event.type == EventType.MARKET:
             ticker = event.ticker
-            bars = self.bars.get_latest_bars_values(
+            bars = self.data_handler.get_latest_bars_values(
                 ticker, "close", N=self.long_window
             )
             bar_date = event.timestamp
@@ -47,8 +50,69 @@ class MACDStrategy(Strategy):
                     self.generate_sell_signals(ticker, bar_date, "SHORT")
                     self.holdinds[ticker] = "EMPTY"
 
-def run(config):
+def run_backtest(config, trading_data, ohlc_data, short_window = 10, long_window = 40):
+    config['title'] = "MACDStrategy" + "_" + str(short_window) + "_" + str(long_window)
+    print("---------------------------------")
+    print(config['title'])
+    print("---------------------------------")
+
     events_queue = queue.Queue()
+
+    data_handler = OHLCDataHandler(
+        config, events_queue,
+        trading_data = trading_data, ohlc_data = ohlc_data
+    )
+    strategy = MACDStrategy(config, events_queue, data_handler,
+                            short_window=short_window, long_window=long_window)
+
+    backtest = Backtest(config, events_queue, strategy,
+                        data_handler= data_handler)
+
+    results = backtest.start_trading()
+    return backtest, results
+
+
+    # dict_ans = {
+    #     "short_window": [short_window],
+    #     "long_window": [long_window],
+    #     "Sharpe Ratio": [results['sharpe']],
+    #     "Total Returns": [(results['cum_returns'][-1] - 1)],
+    #     "Max Drawdown": [(results["max_drawdown"] * 100.0)],
+    #     "Max Drawdown Duration": [(results['max_drawdown_duration'])],
+    #     "Trades": [results['trade_info']['trading_num']],
+    #     "Trade Winning": [results['trade_info']['win_pct']],
+    #     "Average Trade": [results['trade_info']['avg_trd_pct']],
+    #     "Average Win": [results['trade_info']['avg_win_pct']],
+    #     "Average Loss": [results['trade_info']['avg_loss_pct']],
+    #     "Best Trade": [results['trade_info']['max_win_pct']],
+    #     "Worst Trade": [results['trade_info']['max_loss_pct']],
+    #     "Worst Trade Date": [results['trade_info']['max_loss_dt']],
+    #     "Avg Days in Trade": [results['trade_info']['avg_dit']]
+    # }
+    # return pd.DataFrame(dict_ans)
+
+
+if __name__ == "__main__":
+    config = {
+        "csv_dir": "C:/backtest/Binance",
+        "out_dir": "C:/backtest/results/MACDStrategy",
+        "title": "MACDStrategy",
+        "is_plot": True,
+        "save_plot": True,
+        "save_tradelog": True,
+        "start_date": pd.Timestamp("2018-04-01T00:0:00", freq="60" + "T"),  # str(freq) + "T"
+        "end_date": pd.Timestamp("2018-09-01T00:00:00", freq="60" + "T"),
+        "equity": 500.0,
+        "freq": 60,  # min
+        "commission_ratio": 0.001,
+        "suggested_quantity": None,     # None or a value
+        "max_quantity": None,           # None or a value, Maximum purchase quantity
+        "min_quantity": None,           # None or a value, Minimum purchase quantity
+        "min_handheld_cash": None,      # None or a value, Minimum handheld funds
+        "exchange": "Binance",
+        "tickers": ['BTCUSDT']
+    }
+
 
     # trading_data = {}
     # for ticker in config['tickers']:
@@ -62,35 +126,31 @@ def run(config):
 
     trading_data = None
 
-    data_handler = OHLCDataHandler(
-        config['csv_dir'], config['freq'], events_queue, config['tickers'],
-        start_date=config['start_date'], end_date=config['end_date'],
-        trading_data = trading_data, ohlc_data = ohlc_data
-    )
-    strategy = MACDStrategy(data_handler, events_queue, suggested_quantity = 1,
-                            short_window = 10, long_window = 40)
-
-    backtest = Backtest(config, events_queue, strategy,
-                        data_handler= data_handler)
-
-    results = backtest.start_trading()
-    return backtest, results
+    backtest, results = run_backtest(config, trading_data, ohlc_data, short_window = 10, long_window = 40):
 
 
-if __name__ == "__main__":
-    config = {
-        "csv_dir": "C:/backtest/Binance",
-        "out_dir": "C:/backtest/results/MACDStrategy",
-        "title": "MACDStrategy",
-        "is_plot": True,
-        "save_plot": True,
-        "save_tradelog": True,
-        "start_date": pd.Timestamp("2017-01-01T00:0:00", freq="60" + "T"),  # str(freq) + "T"
-        "end_date": pd.Timestamp("2018-09-01T00:00:00", freq="60" + "T"),
-        "equity": 500.0,
-        "freq": 60,  # min
-        "commission_ratio": 0.001,
-        "exchange": "Binance",
-        "tickers": ['BTCUSDT']
-    }
-    backtest, results = run(config)
+
+
+    # interval = np.array([5, 10, 12, 26, 30, 35, 45, 60, 72, 84, 96, 120, 252])
+    # # interval = np.array([5, 12, 26, 45, 60, 96, 120, 252])
+    # # interval = np.array([5, 30, 120])
+
+    # pool = Pool(4)
+    # results = []
+    # for i in range(len(interval)):
+    #     for j in range(i + 1, len(interval)):
+    #         short_window = interval[i]
+    #         long_window = interval[j]
+    #         result = pool.apply_async(run, args=(config, trading_data, ohlc_data, short_window, long_window,))
+    #         results.append(result)
+
+    # ans = pd.DataFrame()
+    # for results in results:
+    #     df = results.get()
+    #     ans = pd.concat([ans, df], ignore_index=True)
+    # pool.close()
+
+    # if not os.path.exists(config['out_dir']):
+    #     os.makedirs(config['out_dir'])
+    # ans = ans.sort_values(by="Total Returns", ascending=False)
+    # ans.to_csv(config['out_dir'] + "/result_MACDStrategy.csv")

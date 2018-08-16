@@ -47,7 +47,7 @@ class SignalEvent(Event):
     Handles the event of sending a Signal from a Strategy object.
     This is received by a Portfolio object and acted upon.
     """
-    def __init__(self, ticker, action, suggested_quantity, trade_mark):
+    def __init__(self, ticker, action, trade_mark):
         """
         Initialises the SignalEvent.
 
@@ -65,7 +65,6 @@ class SignalEvent(Event):
         self.type = EventType.SIGNAL
         self.ticker = ticker
         self.action = action       
-        self.suggested_quantity = suggested_quantity
         self.trade_mark = trade_mark
 
 
@@ -73,7 +72,7 @@ class OrderEvent(Event):
     """
     Handles the event of sending an Order to an execution system.
     """
-    def __init__(self, ticker, action, quantity, trade_mark):
+    def __init__(self, ticker, action, quantity, trade_mark, commission):
         """
         Initialises the OrderEvent.
 
@@ -85,12 +84,14 @@ class OrderEvent(Event):
                     determine by users in Strategy.generate_signals(),
                     such as "LONG", "SHORT", "ENMPY", 
                     "BUY", "SELL", "CLOSE" and etc.
+        commission_ratio: the commission of transaction, 
         """
         self.type = EventType.ORDER
         self.ticker = ticker
         self.action  =action        # "LONG" or "SHORT"
         self.quantity = quantity
         self.trade_mark = trade_mark
+        self.commission = commission
 
     def print_order(self):
         print("Order: Ticker = %s, Action = %s, Quantity = %s" % (
@@ -102,7 +103,7 @@ class FillEvent(Event):
     Encapsulates the notion of a filled order, as returned from a brokerage.
     """
     def __init__(self, timestamp, ticker, action, quantity, exchange, 
-                price, trade_mark, commission_ratio):
+                price, trade_mark, commission):
         """
         Initialises the FillEvent object.
 
@@ -116,8 +117,7 @@ class FillEvent(Event):
                     determine by users in Strategy.generate_signals(),
                     such as "LONG", "SHORT", "ENMPY", 
                     "BUY", "SELL", "CLOSE" and etc.
-        commission_ratio: the commission ratio of transaction, 
-                          and the commission is "ratio * price * quantity"
+        commission_ratio: the commission of transaction, 
         """
         self.type = EventType.FILL
         self.timestamp = timestamp
@@ -127,10 +127,5 @@ class FillEvent(Event):
         self.exchange = exchange
         self.price = price
         self.trade_mark = trade_mark
-        if commission_ratio is None:
-            self.commission = 0.001 * self.quantity * self.price
-        else:
-            self.commission = commission_ratio * self.quantity * self.price
-
-
-
+        self.commission = commission
+        

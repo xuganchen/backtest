@@ -3,9 +3,11 @@ This is event-driven backtesting simulation written in Python.
 
 * _Backtest_: the code of this backtesting system
 * xxxxStrategy.py: the specific strategy, you can run them directly
-* xxxxStrategy_test.py: parameter adjusted file corresponding to "xxxxStrategy.py"
+* xxxxStrategy_BO.py: parameter adjusted file corresponding to "xxxxStrategy.py" using _Bayesian Optimization_
 * _result_: results of some strategies
+* _BayesianOptimization_: the method of Bayesian Optimization, uesd to adjust parameters
 * _Binance_: data that have been processed into "OHLC" format. (using Backtest.open_json_gz_files and Backtest.generate bars)
+* _archive_: the code for parameter adjustment using grid search
 
 * Data format:
 
@@ -224,8 +226,99 @@ class MACDStrategy(Strategy):
 ```
 
 
+### Adjusting Paramaters Using Bayesian Optimization
+
+_BayesianOptimization_: [fmfn/BayesianOptimization](https://github.com/fmfn/BayesianOptimization)
+
+>This is a constrained global optimization package built upon bayesian inference and gaussian process, that attempts to find the maximum value of an unknown function in as few iterations as possible. This technique is particularly suited for optimization of high cost functions, situations where the balance between exploration and exploitation is important.
+
+And I add several features into it, including passing invariants and the type of variable.
+
+For example:
+```python
+import numpy as np
+import pandas as pd
+import queue
+import matplotlib.pyplot as plt
+from BayesianOptimization.bayesian_optimization import BayesianOptimization
+from Backtest.backtest import Backtest
+from Backtest.data import OHLCDataHandler
+from ADXStrategy import ADXStrategy
+from Backtest.open_json_gz_files import open_json_gz_files
+from Backtest.generate_bars import generate_bars
+
+def run_backtest(config, trading_data, ohlc_data, window):
+    window = int(window)
+    config['title'] = "ADXStrategy" + "_" + str(window)
+    print("---------------------------------")
+    print(config['title'])
+    print("---------------------------------")
+    
+    events_queue = queue.Queue()
+
+    data_handler = OHLCDataHandler(
+        config, events_queue,
+        trading_data = trading_data, ohlc_data = ohlc_data
+    )
+    strategy = ADXStrategy(config, events_queue, data_handler,
+                           window = window)
+
+    backtest = Backtest(config, events_queue, strategy,
+                        data_handler= data_handler)
+
+    results = backtest.start_trading()
+    return (results['cum_returns'][-1] - 1)
+
+config = {
+    "csv_dir": "C:/backtest/Binance",
+    "out_dir": "C:/backtest/results/ADXStrategy",
+    "title": "ADXStrategy",
+    "is_plot": False,
+    "save_plot": False,
+    "save_tradelog": False,
+    "start_date": pd.Timestamp("2017-07-01T00:0:00", freq = "60" + "T"),    # str(freq) + "T"
+    "end_date": pd.Timestamp("2018-09-01T00:00:00", freq = "60" + "T"),
+    "equity": 1.0,
+    "freq": 60,      # min
+    "commission_ratio": 0.001,
+    "suggested_quantity": None,     # None or a value
+    "max_quantity": None,           # None or a value, Maximum purchase quantity
+    "min_quantity": None,           # None or a value, Minimum purchase quantity
+    "min_handheld_cash": None,      # None or a value, Minimum handheld funds
+    "exchange": "Binance",
+    "tickers": ['BTCUSDT']
+}
+
+ohlc_data = {}
+for ticker in config['tickers']:
+    ohlc_data[ticker] = pd.read_hdf(config['csv_dir'] + '\\' + ticker +'_OHLC_60min.h5', key=ticker)
+
+trading_data = None
+```
+
+```python
+gp_params = {"alpha": 1e-5}
+BO = BayesianOptimization(
+    run_backtest,
+    {'window': (1, 240)},
+    is_int = [1], 
+    invariant = {
+        'config': config,
+        'trading_data': trading_data,
+        'ohlc_data': ohlc_data
+    },
+    random_state = 1
+)
+BO.explore({
+    'window': np.arange(1, 240, 20)
+    },
+    eager=True)
+BO.maximize(init_points=0, n_iter=10, acq='ucb', kappa=5, **gp_params)
+print(BO.res['max'])
+```
+More usage seeing example and documents.
 
 ## Class and Function Explanation
 
-See _DOCUMENT.md_
+See _DOCUMENT for Backtest.md_ and _DOCUMENT for BayesianOptimization.md_
 
