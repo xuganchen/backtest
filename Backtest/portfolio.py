@@ -304,10 +304,14 @@ class PortfolioHandler(Portfolio):
         event_price = self.data_handler.get_latest_bar_value(event.ticker, "close")
 
         if event.ticker not in self.current_tickers and event.action == "LONG":
-            if self.config['suggested_quantity'] is not None:
+            if event.suggested_quantity is not None:
+                quantity = event.suggested_quantity
+            elif self.config['suggested_quantity'] is not None:
                 quantity = self.config['suggested_quantity']
             else:
                 cash = self.cash_for_order - self.min_handheld_cash
+                if event.suggested_cash is not None and event.suggested_cash <= cash:
+                    cash = event.suggested_cash
                 # quantity_pro = self._get_floor_round((cash * (1 - self.commission_ratio)) / (event_price), 6)
                 quantity_pro = (cash * (1 - self.commission_ratio)) / (event_price)
                 quantity = np.clip(quantity_pro, self.min_quantity, self.max_quantity)
@@ -348,10 +352,14 @@ class PortfolioHandler(Portfolio):
         if event.ticker in self.current_tickers and event.action == "SHORT":
             quantity = self.current_tickers_info[ticker]['quantity']
         elif event.ticker not in self.current_tickers and event.action == "SHORT":
-            if self.config['suggested_quantity'] is not None:
+            if event.suggested_quantity is not None:
+                quantity = event.suggested_quantity
+            elif self.config['suggested_quantity'] is not None:
                 quantity = self.config['suggested_quantity']
             else:
                 cash = self.cash_for_order - self.min_handheld_cash
+                if event.suggested_cash is not None and event.suggested_cash <= cash:
+                    cash = event.suggested_cash
                 # quantity_pro = self._get_floor_round((cash * (1 - self.commission_ratio)) / (event_price), 6)
                 quantity_pro = (cash * (1 - self.commission_ratio)) / (event_price)
                 quantity = np.clip(quantity_pro, self.min_quantity, self.max_quantity)

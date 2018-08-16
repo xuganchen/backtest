@@ -46,22 +46,22 @@ class Strategy(object):
         '''
         raise NotImplementedError("Should implement generate_signals()")
 
-    def generate_buy_signals(self, ticker, bar_date, str):
+    def generate_buy_signals(self, ticker, bar_date, str, suggested_quantity = None, suggested_cash = None):
         '''
         If can_buy():
         print the information
         and generate LONG(buy) signal
         '''
         # print("%s: %s, %s" % (ticker, str, bar_date))
-        signal = SignalEvent(ticker, "LONG", str)
+        signal = SignalEvent(ticker, "LONG", str, suggested_quantity, suggested_cash)
         self.events.put(signal)
 
-    def generate_sell_signals(self, ticker, bar_date, str):
+    def generate_sell_signals(self, ticker, bar_date, str, suggested_quantity = None, suggested_cash = None):
         '''
         If can_sell():
         print the information
         and generate SHORT(sell) signal
         '''
         # print("%s: %s, %s" % (ticker, str, bar_date))
-        signal = SignalEvent(ticker, "SHORT", str)
+        signal = SignalEvent(ticker, "SHORT", str, suggested_quantity, suggested_cash)
         self.events.put(signal)
