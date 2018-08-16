@@ -126,7 +126,7 @@ if __name__ == "__main__":
 
     trading_data = None
 
-    backtest, results = run_backtest(config, trading_data, ohlc_data, short_window = 10, long_window = 40):
+    backtest, results = run_backtest(config, trading_data, ohlc_data, short_window = 10, long_window = 40)
 
 
 
