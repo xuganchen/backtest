@@ -103,7 +103,8 @@ class Backtest(object):
         '''
         Determine whether can continue to test back.
         '''
-        return self.data_handler.continue_backtest
+        continue_backtest = self.data_handler.continue_backtest.values()
+        return sum(continue_backtest)
 
 
     def _run_backtest(self):
@@ -131,15 +132,15 @@ class Backtest(object):
                             if it is a MARKET event:
                             # determine if there is a trading signal 
                               and generate the SIGNAL event
-                            '''
-                            self.strategy.generate_signals(event)            
+                            '''       
+                            self.strategy.generate_signals(event)     
 
                         if event.type == EventType.SIGNAL:                  
                             '''
                             if it is a SIGNAL event:
                             # generate the ORDER event
-                            '''
-                            self.portfolio_handler.update_signal(event)     
+                            '''           
+                            self.portfolio_handler.update_signal(event)
 
                         if event.type == EventType.ORDER:                   
                             '''
@@ -147,14 +148,14 @@ class Backtest(object):
                             # execute the order, 
                               record the order 
                               and generate the FILL event
-                            '''
+                            '''      
                             self.execution_handler.execute_order(event)     
 
                         if event.type == EventType.FILL:                    
                             '''
                             # if it is a FILL event:
                             # update portfolio after ordering
-                            '''
+                            '''      
                             self.portfolio_handler.update_fill(event)  
 
             # update timeline for portfolio

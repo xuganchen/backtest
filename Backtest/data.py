@@ -98,7 +98,7 @@ class OHLCDataHandler(DataHandler):
         self.end_date = config['end_date']
         self.events_queue = events_queue
 
-        self.continue_backtest = True
+        self.continue_backtest = {ticker: True for ticker in self.tickers}
 
         self.trading_data = {}
         self.data = {}
@@ -235,7 +235,7 @@ class OHLCDataHandler(DataHandler):
             try:
                 bar = next(self._get_new_bar(ticker))
             except StopIteration:
-                self.continue_backtest = False
+                self.continue_backtest[ticker] = False
             else:
                 if bar is not None:
                     self.latest_data[ticker].append(bar)
