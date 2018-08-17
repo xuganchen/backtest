@@ -109,9 +109,10 @@ if __name__ == "__main__":
         },
         random_state=1
     )
+    print(np.arange(1, 120, 10))
     BO.explore({
         'window': np.arange(1, 120, 10),
-        'num': np.arange(1, 12)
+        'num': np.repeat(3, 12)
     },
         eager=True)
     BO.maximize(init_points=0, n_iter=50, acq="ei", xi=0.01, **gp_params)

@@ -53,10 +53,6 @@ def run_backtest(config, trading_data, ohlc_data, window, a):
 
 
 def plot_bo(BO, filename):
-    short_window = [x["short_window"] for x in BO.res["all"]["params"]]
-    delta_window = [x["delta_window"] for x in BO.res["all"]["params"]]
-    long_window = short_window + delta_window
-    Target = BO.res["all"]["values"]
     num = np.array([[i, j] for i in range(0, 3, 0.05) for j in range(240)])
     mean, sigma = BO.gp.predict(num, return_std=True)
     X, Y = np.meshgrid(range(240), range(0, 3, 0.05))

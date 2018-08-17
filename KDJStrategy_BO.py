@@ -127,5 +127,3 @@ if __name__ == "__main__":
     Target.to_csv(config['out_dir'] + "/target_ei.csv")
     Target.sort_values(by="Target")
 
-    filename = config['out_dir'] + "/target_ei.png"
-    plot_bo(BO, filename)

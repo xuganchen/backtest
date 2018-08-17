@@ -95,8 +95,8 @@ if __name__ == "__main__":
     BO = BayesianOptimization(
         run_backtest,
         pbounds={'window': (1, 240),
-                 's': (55, 95),
-                 'b': (5, 45)},
+                 's': (55, 75),
+                 'b': (25, 45)},
         is_int=[1, 1, 1],
         invariant={
             'config': config,
@@ -107,13 +107,13 @@ if __name__ == "__main__":
     )
     BO.explore({
         'window': np.arange(1, 240, 24),
-        's': np.arange(95, 55, -4)
-        'b': np.arange(5, 45, 4)
+        's': np.arange(75, 55, -2),
+        'b': np.arange(25, 45, 2)
     },
         eager=True)
     BO.maximize(init_points=0, n_iter=100, acq="ei", xi=0.1, **gp_params)
     BO.maximize(init_points=0, n_iter=100, acq="ei", xi=0.0001, **gp_params)
 
     Target = pd.DataFrame({'Parameters': BO.X.tolist(), 'Target': BO.Y})
-    # Target.to_csv(config['out_dir'] + "/target_ei.csv")
+    Target.to_csv(config['out_dir'] + "/target_ei.csv")
     Target.sort_values(by="Target")
