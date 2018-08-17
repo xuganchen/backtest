@@ -4,7 +4,7 @@ This is event-driven backtesting simulation written in Python.
 * _Backtest_: the code of this backtesting system
 * xxxxStrategy.py: the specific strategy, you can run them directly
 * xxxxStrategy_BO.py: parameter adjusted file corresponding to "xxxxStrategy.py" using _Bayesian Optimization_
-* _result_: results of some strategies
+* _result_: results of some strategies using Beyesian Optimization. The parameters of the highest target in the csv files is the best parameters for each strategy.
 * _BayesianOptimization_: the method of Bayesian Optimization, uesd to adjust parameters
 * _Binance_: data that have been processed into "OHLC" format. (using Backtest.open_json_gz_files and Backtest.generate bars)
 * _archive_: the code for parameter adjustment using grid search
