@@ -67,19 +67,23 @@ Firtstly, initialize settings:
 
 ```python
 config = {
-	"csv_dir": "C:/backtest/trades_Bitfinex_folder",
-	"out_dir": "C:/backtest/backtest/results/MACDStrategy",
-	"title": "MACDStrategy",
-	"is_plot": True,
-	"save_plot": True,
-	"save_tradelog": True,
-	"start_date": pd.Timestamp("2017-01-01T00:0:00", freq="60" + "T"),  # str(freq) + "T"
-	"end_date": pd.Timestamp("2018-09-01T00:00:00", freq="60" + "T"),
-	"equity": 100000.0,
-	"freq": 60,  # min
-	"commission_ratio": 0.001,
-    "exchange": "Binance", 
-	"tickers": ['ETHUSD', 'BCHUSD', 'BCHBTC', 'BCHETH', 'EOSBTC']
+    "csv_dir": "C:/backtest/Binance",
+    "out_dir": "C:/backtest/results/MACDStrategy",
+    "title": "MACDStrategy",
+    "is_plot": True,
+    "save_plot": True,
+    "save_tradelog": True,
+    "start_date": pd.Timestamp("2018-04-01T00:0:00", freq="60" + "T"),  # str(freq) + "T"
+    "end_date": pd.Timestamp("2018-09-01T00:00:00", freq="60" + "T"),
+    "equity": 500.0,
+    "freq": 60,  # min
+    "commission_ratio": 0.001,
+    "suggested_quantity": None,     # None or a value
+    "max_quantity": None,           # None or a value, Maximum purchase quantity
+    "min_quantity": None,           # None or a value, Minimum purchase quantity
+    "min_handheld_cash": None,      # None or a value, Minimum handheld funds
+    "exchange": "Binance",
+    "tickers": ['BTCUSDT']
 }
 ```
 
@@ -93,7 +97,11 @@ config = {
 * "end_date": pd.Timestamp("xxxx-xx-xxTxx:xx:xx", freq= str("freq") + "T"), end datetime of backtesting
 * "equity": initial funding,
 * "freq": the frequency of backtesting,  a integer in minutes,
-* "commission_ratio": the commission ratio of transaction, and the commission is "ratio * price * quantity"
+* "commission_ratio": the commission ratio of transaction, and the commission equantion is "cash * (1 + ratio) = price * quantity"
+* "suggested_quantity": None or a value.if None, buy using all cash; if a value, buy fixed quantity
+* "max_quantity": None or a value. If a value, this is the maximum number of transactions
+* "min_quantity": None or a value. If a value, this is the minimum number of transactions
+* "min_handheld_cash": None or a value. If a value, this is the minimum handheld funds
 * "exchange": the exchange
 * "tickers": the list of trading digital currency.
 
