@@ -22,6 +22,8 @@ This is event-driven backtesting simulation written in Python.
 ### Event-Driven
 It is handled by running the event-loop calculations, which can be simply expressed as below by pseudo-code:
 
+This system was originally started with reference to [QuantStart](https://www.quantstart.com/articles).
+
 ```python
 while True:								# run the loop forever by each tick
     try:
