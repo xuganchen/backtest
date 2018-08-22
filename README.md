@@ -2,9 +2,11 @@
 This is event-driven backtesting simulation written in Python.
 
 * _Backtest_: the code of this backtesting system
+* _DOCUMENT_: the documents of _Backtest_, _BayesianOptimization_ and _hyperopt_
 * xxxxStrategy.py: the specific strategy, you can run them directly
-* xxxxStrategy_BO.py: parameter adjusted file corresponding to "xxxxStrategy.py" using _Bayesian Optimization_
-* _result_: results of some strategies using Beyesian Optimization. The parameters of the highest target in the csv files is the best parameters for each strategy.
+* xxxxStrategy_BO.ipynb: parameter adjusted file corresponding to "xxxxStrategy.py" using _Bayesian Optimization_
+* xxxxStrategy_hyperopt.ipynb: parameter adjusted file corresponding to "xxxxStrategy.py" using TPE based on [_hyperopt_](https://github.com/hyperopt/hyperopt) package
+* _result_: results of some strategies using Beyesian Optimization and TPE. And the HTML file from xxxxStrategy_BO.ipynb and xxxxStrategy_hyperopt.ipynb
 * _BayesianOptimization_: the method of Bayesian Optimization, uesd to adjust parameters
 * _Binance_: data that have been processed into "OHLC" format. (using Backtest.open_json_gz_files and Backtest.generate bars)
 * _archive_: the code for parameter adjustment using grid search
@@ -77,7 +79,7 @@ config = {
     "save_tradelog": True,
     "start_date": pd.Timestamp("2018-04-01T00:0:00", freq="60" + "T"),  # str(freq) + "T"
     "end_date": pd.Timestamp("2018-09-01T00:00:00", freq="60" + "T"),
-    "equity": 500.0,
+    "equity": 1.0,
     "freq": 60,  # min
     "commission_ratio": 0.001,
     "suggested_quantity": None,     # None or a value
@@ -328,7 +330,47 @@ print(BO.res['max'])
 ```
 More usage seeing example and documents.
 
+### Adjusting Paramaters Using  TPE
+
+_hyperopt_: [hyperopt/hyperopt](https://github.com/hyperopt/hyperopt)
+
+>Hyperopt: Distributed Asynchronous Hyper-parameter Optimization
+
+>Hyperopt is a Python library for serial and parallel optimization over awkward search spaces, which may include real-valued, discrete, and conditional dimensions.
+
+the document of the package is [http://hyperopt.github.io/hyperopt](http://hyperopt.github.io/hyperopt)
+
+and the using of the function TPE is [https://github.com/hyperopt/hyperopt/wiki/FMin](https://github.com/hyperopt/hyperopt/wiki/FMin)
+
+#### Installation
+```python
+pip install hyperopt
+```
+
+#### Simplest Case
+```python
+from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
+
+def objective(x):
+    return {'loss': x ** 2, 'status': STATUS_OK }
+
+space = hp.choice('a',
+    [
+        ('case 1', 1 + hp.lognormal('c1', 0, 1)),
+        ('case 2', hp.uniform('c2', -10, 10))
+    ])
+
+trials = Trials()
+
+best = fmin(fn=objective,
+            space=space,
+            algo=tpe.suggest,
+            max_evals=100,
+            trials=trials)
+print(best)
+```
+
 ## Class and Function Explanation
 
-See _DOCUMENT for Backtest.md_ and _DOCUMENT for BayesianOptimization.md_
+See _DOCUMENT for Backtest.md_, _DOCUMENT for BayesianOptimization.md_ and _DOCUMENT for hyperopt.md_
 
