@@ -12,9 +12,10 @@ from Backtest.open_json_gz_files import open_json_gz_files
 from Backtest.generate_bars import generate_bars
 
 
-class ADXStrategy(Strategy):
+class ADX_RSIStrategy(Strategy):
     def __init__(self, config, events, data_handler,
-                 window = 10):
+                 window_ADX = 10,
+                 window_RSI = 10, s=70, b=30):
         self.config = config
         self.data_handler = data_handler
         self.tickers = self.config['tickers']
@@ -23,9 +24,15 @@ class ADXStrategy(Strategy):
         self.start_date = self.config['start_date']
         self.end_date = self.config['end_date']
 
-        self.window = (window - 1) * pd.to_timedelta(str(data_handler.freq) + "Min")
+        self.window_ADX = (window_ADX - 1) * pd.to_timedelta(str(data_handler.freq) + "Min")
         self.hd = pd.Series(0, index = data_handler.times[self.start_date: self.end_date])
         self.ld = pd.Series(0, index = data_handler.times[self.start_date: self.end_date])
+
+        self.window_RSI = (window_RSI - 1) * pd.to_timedelta(str(data_handler.freq) + "Min")
+        self.s = s
+        self.b = b
+
+        self.updown = pd.Series(0.0, index = data_handler.times[self.start_date: self.end_date])
 
     def _calculate_initial_holdings(self):
         holdings = {}
@@ -45,8 +52,8 @@ class ADXStrategy(Strategy):
         else:
             self.ld[bar_date] = 0
 
-        hd_mean = np.mean(self.hd[bar_date - self.window: bar_date])
-        ld_mean = np.mean(self.ld[bar_date - self.window: bar_date])
+        hd_mean = np.mean(self.hd[bar_date - self.window_ADX: bar_date])
+        ld_mean = np.mean(self.ld[bar_date - self.window_ADX: bar_date])
         return hd_mean, ld_mean
 
     def generate_signals(self, event):
@@ -55,21 +62,34 @@ class ADXStrategy(Strategy):
             bar_date = event.timestamp
             bars_high = self.data_handler.get_latest_bars_values(ticker, "high", N = 2)
             bars_low = self.data_handler.get_latest_bars_values(ticker, "low", N = 2)
+            bars = self.data_handler.get_latest_bars_values(
+                ticker, "close", N=2
+            )
 
-            if len(bars_high) > 1:
+            if len(bars_high) > 1 and len(bars) > 1:
                 hd_mean, ld_mean = self._get_hdld(bars_high, bars_low, bar_date)
-                if hd_mean - ld_mean > 0 and self.holdinds[ticker] == "EMPTY":
+
+                self.updown[bar_date] = bars[-1] - bars[-2]
+                updown = self.updown[bar_date - self.window_RSI: bar_date]
+                up = np.sum(updown.loc[updown > 0])
+                down = -1 * np.sum(updown.loc[updown < 0])
+                if down == 0:
+                    RSI = 100
+                else:
+                    RSI = 100 - 100 / (1 + up / down)
+
+                if (hd_mean - ld_mean > 0 and RSI < self.b) and self.holdinds[ticker] == "EMPTY":
                     self.generate_buy_signals(ticker, bar_date, "LONG")
                     self.holdinds[ticker] = "HOLD"
-                elif hd_mean - ld_mean < 0 and self.holdinds[ticker] == "HOLD":
+                elif (hd_mean - ld_mean < 0 or RSI > self.s) and self.holdinds[ticker] == "HOLD":
                     self.generate_sell_signals(ticker, bar_date, "SHORT")
                     self.holdinds[ticker] = "EMPTY"
             else:
                 self.hd[bar_date] = 0
                 self.ld[bar_date] = 0
 
-def run_backtest(config, trading_data, ohlc_data, window = 10):
-    config['title'] = "ADXStrategy" + "_" + str(window)
+def run_backtest(config, trading_data, ohlc_data, window_ADX = 10, window_RSI = 10, s=70, b=30):
+    config['title'] = "ADX_RSIStrategy" + "_" + str(window_ADX) + "_" + str(window_RSI) + "_" + str(s) + "_" + str(b)
     print("---------------------------------")
     print(config['title'])
     print("---------------------------------")
@@ -80,8 +100,9 @@ def run_backtest(config, trading_data, ohlc_data, window = 10):
         config, events_queue,
         trading_data = trading_data, ohlc_data = ohlc_data
     )
-    strategy = ADXStrategy(config, events_queue, data_handler,
-                           window = window)
+    strategy = ADX_RSIStrategy(config, events_queue, data_handler,
+                           window_ADX = window_ADX,
+                            window_RSI=window_RSI, s=s, b=b)
 
     backtest = Backtest(config, events_queue, strategy,
                         data_handler= data_handler)
@@ -89,34 +110,17 @@ def run_backtest(config, trading_data, ohlc_data, window = 10):
     results = backtest.start_trading()
     return backtest, results
     
-    # dict_ans = {
-    #     "window": [window],
-    #     "Sharpe Ratio": [results['sharpe']],
-    #     "Total Returns": [(results['cum_returns'][-1] - 1)],
-    #     "Max Drawdown": [(results["max_drawdown"] * 100.0)],
-    #     "Max Drawdown Duration": [(results['max_drawdown_duration'])],
-    #     "Trades": [results['trade_info']['trading_num']],
-    #     "Trade Winning": [results['trade_info']['win_pct']],
-    #     "Average Trade": [results['trade_info']['avg_trd_pct']],
-    #     "Average Win": [results['trade_info']['avg_win_pct']],
-    #     "Average Loss": [results['trade_info']['avg_loss_pct']],
-    #     "Best Trade": [results['trade_info']['max_win_pct']],
-    #     "Worst Trade": [results['trade_info']['max_loss_pct']],
-    #     "Worst Trade Date": [results['trade_info']['max_loss_dt']],
-    #     "Avg Days in Trade": [results['trade_info']['avg_dit']]
-    # }
-    # return pd.DataFrame(dict_ans)
 
 if __name__ == "__main__":
     config = {
         "csv_dir": "C:/backtest/Binance",
-        "out_dir": "C:/backtest/results/ADXStrategy",
-        "title": "ADXStrategy",
+        "out_dir": "C:/backtest/results/ADX_RSIStrategy",
+        "title": "ADX_RSIStrategy",
         "is_plot": True,
         "save_plot": True,
         "save_tradelog": True,
-        "start_date": pd.Timestamp("2017-04-01T00:0:00", freq = "60" + "T"),    # str(freq) + "T"
-        "end_date": pd.Timestamp("2018-04-01T00:00:00", freq = "60" + "T"),
+        "start_date": pd.Timestamp("2018-04-01T00:0:00", freq = "60" + "T"),    # str(freq) + "T"
+        "end_date": pd.Timestamp("2018-09-01T00:00:00", freq = "60" + "T"),
         "equity": 1.0,
         "freq": 60,      # min
         "commission_ratio": 0.001,
@@ -140,28 +144,6 @@ if __name__ == "__main__":
 
     trading_data = None
 
-    backtest, results = run_backtest(config, trading_data, ohlc_data, window = 18)
+    backtest, results = run_backtest(config, trading_data, ohlc_data, window_ADX = 18, window_RSI = 2, s=78, b=15)
 
 
-
-    # interval = np.array([5, 10, 12, 26, 30, 35, 45, 60, 72, 84, 96, 120, 252])
-    # # interval = np.array([5, 12, 26, 45, 60, 96, 120, 252])
-    # # interval = np.array([5, 30, 120])
-    #
-    # pool = Pool(4)
-    # results = []
-    # for i in range(len(interval)):
-    #     window = interval[i]
-    #     result = pool.apply_async(run_backtest, args=(config, trading_data, ohlc_data, window,))
-    #     results.append(result)
-    #
-    # ans = pd.DataFrame()
-    # for results in results:
-    #     df = results.get()
-    #     ans = pd.concat([ans, df], ignore_index=True)
-    # pool.close()
-    #
-    # if not os.path.exists(config['out_dir']):
-    #     os.makedirs(config['out_dir'])
-    # ans = ans.sort_values(by="Total Returns", ascending=False)
-    # ans.to_csv(config['out_dir'] + "/result_ADXStrategy.csv")

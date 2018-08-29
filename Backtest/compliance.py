@@ -80,3 +80,41 @@ class Compliance(AbstractCompliance):
                 ])
         # print("%s: %s, %s, %.2f, %.6f" % (fillevent.ticker, fillevent.trade_mark,
         #                             fillevent.timestamp, fillevent.price, fillevent.quantity))
+
+    def record_results(self, results):
+        '''
+        record all important results & stats.
+        '''
+        if self.config['save_tradelog']:
+            fname = os.path.expanduser(os.path.join(self.out_dir, self.csv_fname))
+            ratio = {
+                "Sharpe Ratio": results['sharpe'],
+                "Sortino Ratio": results['sortino'],
+                "Max Drawdown": (results["max_drawdown"] * 100.0),
+                "Max Drawdown Duration": (results['max_drawdown_duration']),
+                "Total Returns": (results['cum_returns'][-1] - 1),
+                "Annualized Returns": results['annual_return'],
+                "Compound Annual Growth Rate": results['cagr']
+            }
+
+            trade = {
+                "Trades": results['trade_info']['trading_num'],
+                "Trade Winning": results['trade_info']['win_pct'],
+                "Average Trade": results['trade_info']['avg_trd_pct'],
+                "Average Win": results['trade_info']['avg_win_pct'],
+                "Average Loss": results['trade_info']['avg_loss_pct'],
+                "Best Trade": results['trade_info']['max_win_pct'],
+                "Worst Trade": results['trade_info']['max_loss_pct'],
+                "Worst Trade Date": results['trade_info']['max_loss_dt'],
+                "Avg Days in Trade": results['trade_info']['avg_dit']
+            }
+            with open(fname, 'a') as file:
+                headers = [k for k in ratio]
+                writer = csv.DictWriter(file, fieldnames = headers)
+                writer.writeheader()
+                writer.writerow(ratio)
+
+                headers = [k for k in trade]
+                writer = csv.DictWriter(file, fieldnames = headers)
+                writer.writeheader()
+                writer.writerow(trade)

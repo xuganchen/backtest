@@ -65,7 +65,10 @@ class Performance(object):
         includings:
             results['returns']
             results['daily_returns']
-            results['equity']
+            results['equity']        
+            results['tot_return']
+            results['annual_return']
+            results['cagr']
             results['rolling_sharpe']
             results['cum_returns']
             results['daily_cum_returns']
@@ -73,6 +76,7 @@ class Performance(object):
             results['max_drawdown']
             results['max_drawdown_duration']
             results['sharpe']
+            results['sortino']
             results['positions']
             results['trade_info'] = {
                 "trading_num": 'Trades Number'
@@ -104,6 +108,15 @@ class Performance(object):
         res_cum_returns = res_equity / self.config['equity']
         res_daily_cum_returns = res_cum_returns.resample("D").last()
 
+        # totalreturn
+        res_tot_return = res_cum_returns[-1] - 1.0
+
+        # annualized rate of return
+        times = res_equity.index
+        years = (times[-1] - times[0]).total_seconds() / (self.periods * 24 * 60 * 60)
+        res_annual_return = res_tot_return / years
+        res_cagr = (res_cum_returns[-1] ** (1.0 / years)) - 1.0
+
         # Drawdown, max drawdown, max drawdown duration
         res_drawdown, res_max_dd, res_mdd_dur = self._create_drawdown(res_cum_returns)
 
@@ -113,10 +126,20 @@ class Performance(object):
         else:
             res_sharpe = np.sqrt(self.periods) * np.mean(res_daily_returns) / np.std(res_daily_returns)
 
+        # sortino ratio
+        if np.std(res_daily_returns[res_daily_returns < 0]) == 0:
+            res_sortino = np.nan
+        else:
+            res_sortino = np.sqrt(self.periods) * (np.mean(res_daily_returns)) / np.std(res_daily_returns[res_daily_returns < 0])
+
+
         results = {}
         results['returns'] = res_returns
         results['daily_returns'] = res_daily_returns
         results['equity'] = res_equity
+        results['tot_return'] = res_tot_return
+        results['annual_return'] = res_annual_return
+        results['cagr'] = res_cagr
         results['rolling_sharpe'] = res_rolling_sharpe
         results['cum_returns'] = res_cum_returns
         results['daily_cum_returns'] = res_daily_cum_returns
@@ -124,24 +147,24 @@ class Performance(object):
         results['max_drawdown'] = res_max_dd
         results['max_drawdown_duration'] = res_mdd_dur
         results['sharpe'] = res_sharpe
+        results['sortino'] = res_sortino
 
         positions = self._get_positions()
         if positions is not None:
             results['positions'] = positions
             num_trades = positions.shape[0]
             win_pct = positions[positions["return"] > 0].shape[0] / float(num_trades)
-            win_pct_str = '{:.0%}'.format(win_pct)
-            avg_trd_pct = '{:.2%}'.format(np.mean(positions["return"]))
-            avg_win_pct = '{:.2%}'.format(np.mean(positions[positions["return"] > 0]["return"]))
-            avg_loss_pct = '{:.2%}'.format(np.mean(positions[positions["return"] <= 0]["return"]))
-            max_win_pct = '{:.2%}'.format(np.max(positions["return"]))
-            max_loss_pct = '{:.2%}'.format(np.min(positions["return"]))
+            avg_trd_pct = np.mean(positions["return"])
+            avg_win_pct = np.mean(positions[positions["return"] > 0]["return"])
+            avg_loss_pct = np.mean(positions[positions["return"] <= 0]["return"])
+            max_win_pct = np.max(positions["return"])
+            max_loss_pct = np.min(positions["return"])
             max_loss = positions[positions["return"] == np.min(positions["return"])]
             max_loss_dt = np.mean(max_loss["timedelta"]).round(freq = "s")
             avg_dit = np.mean(positions["timedelta"]).round(freq = "s")
             results['trade_info'] = {
                 "trading_num": num_trades,      # 'Trades'
-                "win_pct": win_pct_str,         # 'Trade Winning %'
+                "win_pct": win_pct,             # 'Trade Winning %'
                 "avg_trd_pct": avg_trd_pct,     # 'Average Trade %'
                 "avg_win_pct": avg_win_pct,     # 'Average Win %'
                 "avg_loss_pct": avg_loss_pct,   # 'Average Loss %'
@@ -151,14 +174,15 @@ class Performance(object):
                 "avg_dit": avg_dit              # 'Avg Days in Trade'
             }
         else:
+            results['positions'] = None
             results['trade_info'] = {
                 "trading_num": 0,               # 'Trades'
-                "win_pct": 'N/A',               # 'Trade Winning %'
-                "avg_trd_pct": 'N/A',           # 'Average Trade %'
-                "avg_win_pct": 'N/A',           # 'Average Win %'
-                "avg_loss_pct": 'N/A',          # 'Average Loss %'
-                "max_win_pct": 'N/A',           # 'Best Trade %'
-                "max_loss_pct": 'N/A',          # 'Worst Trade %'
+                "win_pct": np.nan,              # 'Trade Winning %'
+                "avg_trd_pct": np.nan,          # 'Average Trade %'
+                "avg_win_pct": np.nan,          # 'Average Win %'
+                "avg_loss_pct": np.nan,         # 'Average Loss %'
+                "max_win_pct": np.nan,          # 'Best Trade %'
+                "max_loss_pct": np.nan,         # 'Worst Trade %'
                 "max_loss_dt": 0,               # 'Worst Trade Date'
                 "avg_dit": 0                    # 'Avg Days in Trade'
             }

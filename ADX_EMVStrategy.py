@@ -12,9 +12,10 @@ from Backtest.open_json_gz_files import open_json_gz_files
 from Backtest.generate_bars import generate_bars
 
 
-class EMVStrategy(Strategy):
+class ADX_EMVStrategy(Strategy):
     def __init__(self, config, events, data_handler,
-                 window = 60, n = 30, m = 10):
+                 window_ADX = 10,
+                 window_EMV = 60, n = 30, m = 10):
         self.config = config
         self.data_handler = data_handler
         self.tickers = self.config['tickers']
@@ -23,7 +24,11 @@ class EMVStrategy(Strategy):
         self.start_date = self.config['start_date']
         self.end_date = self.config['end_date']
 
-        self.window = window
+        self.window_ADX = (window_ADX - 1) * pd.to_timedelta(str(data_handler.freq) + "Min")
+        self.hd = pd.Series(0, index = data_handler.times[self.start_date: self.end_date])
+        self.ld = pd.Series(0, index = data_handler.times[self.start_date: self.end_date])
+
+        self.window_EMV = window_EMV
         self.n = (n - 1) * pd.to_timedelta(str(data_handler.freq) + "Min") 
         self.m = (m - 1) * pd.to_timedelta(str(data_handler.freq) + "Min")
 
@@ -36,11 +41,27 @@ class EMVStrategy(Strategy):
             holdings[s] = "EMPTY"
         return holdings
 
+    def _get_hdld(self, bars_high, bars_low, bar_date):
+        a = bars_high[-1] - bars_high[-2]
+        b = bars_low[-2] - bars_low[-1]
+        if a > 0 and a > b:
+            self.hd[bar_date] = a
+        else:
+            self.hd[bar_date] = 0
+        if b > 0 and b > a:
+            self.ld[bar_date] = b
+        else:
+            self.ld[bar_date] = 0
+
+        hd_mean = np.mean(self.hd[bar_date - self.window_ADX: bar_date])
+        ld_mean = np.mean(self.ld[bar_date - self.window_ADX: bar_date])
+        return hd_mean, ld_mean
+
     def _get_em(self, bars_high, bars_low, bars_amount, bar_date):
-        roll_max_t = np.max(bars_high[-self.window:])
-        roll_min_t = np.min(bars_low[-self.window:])
-        roll_max_2t = np.max(bars_high[-2 * self.window: -self.window])
-        roll_min_2t = np.min(bars_low[-2 * self.window: -self.window])
+        roll_max_t = np.max(bars_high[-self.window_EMV:])
+        roll_min_t = np.min(bars_low[-self.window_EMV:])
+        roll_max_2t = np.max(bars_high[-2 * self.window_EMV: -self.window_EMV])
+        roll_min_2t = np.min(bars_low[-2 * self.window_EMV: -self.window_EMV])
         roll_amount_t = np.sum(bars_amount)
         roll_t = roll_min_t + roll_max_t
         roll_2t = roll_min_2t + roll_max_2t
@@ -55,68 +76,54 @@ class EMVStrategy(Strategy):
     def generate_signals(self, event):
         if event.type == EventType.MARKET:
             ticker = event.ticker
-            bars_high = self.data_handler.get_latest_bars_values(ticker, "high", N = 2 * self.window)
-            bars_low = self.data_handler.get_latest_bars_values(ticker, "low", N = 2 * self.window)
-            bars_amount = self.data_handler.get_latest_bars_values(ticker, "amount", N = self.window)
             bar_date = event.timestamp
+            bars_high_ADX = self.data_handler.get_latest_bars_values(ticker, "high", N = 2)
+            bars_low_ADX = self.data_handler.get_latest_bars_values(ticker, "low", N = 2)
+            bars_high_EMV = self.data_handler.get_latest_bars_values(ticker, "high", N = 2 * self.window_EMV)
+            bars_low_EMV = self.data_handler.get_latest_bars_values(ticker, "low", N = 2 * self.window_EMV)
+            bars_amount_EMV = self.data_handler.get_latest_bars_values(ticker, "amount", N = self.window_EMV)
 
-            if len(bars_high) > self.window:
-                em, emv, maemv = self._get_em(bars_high, bars_low, bars_amount, bar_date)
-                if emv > maemv and self.holdinds[ticker] == "EMPTY":
+            if len(bars_high_ADX) > 1 and len(bars_high_EMV) > self.window_EMV:
+                hd_mean, ld_mean = self._get_hdld(bars_high_ADX, bars_low_ADX, bar_date)
+                em, emv, maemv = self._get_em(bars_high_EMV, bars_low_EMV, bars_amount_EMV, bar_date)
+                if (hd_mean - ld_mean > 0 and emv > maemv) and self.holdinds[ticker] == "EMPTY":
                     self.generate_buy_signals(ticker, bar_date, "LONG")
                     self.holdinds[ticker] = "HOLD"
-                elif emv < maemv and self.holdinds[ticker] == "HOLD":
+                elif (hd_mean - ld_mean < 0 or emv < maemv) and self.holdinds[ticker] == "HOLD":
                     self.generate_sell_signals(ticker, bar_date, "SHORT")
                     self.holdinds[ticker] = "EMPTY"
-                    
+            else:
+                self.hd[bar_date] = 0
+                self.ld[bar_date] = 0
 
-def run_backtest(config, trading_data, ohlc_data, window=40, n=10, m=10):
-    config['title'] = "EMVStrategy" + "_" + str(window) + "_" + str(n) + "_" + str(m)
+def run_backtest(config, trading_data, ohlc_data, window_ADX = 10, window_EMV=40, n=10, m=10):
+    config['title'] = "ADX_EMVStrategy" + "_" + str(window_ADX) + "_" + str(window_EMV) + "_" + str(n) + "_" + str(m)
     print("---------------------------------")
     print(config['title'])
     print("---------------------------------")
-
+    
     events_queue = queue.Queue()
 
     data_handler = OHLCDataHandler(
         config, events_queue,
         trading_data = trading_data, ohlc_data = ohlc_data
     )
-    strategy = EMVStrategy(config, events_queue, data_handler,
-                           window=window, n=n, m=m)
+    strategy = ADX_EMVStrategy(config, events_queue, data_handler,
+                           window_ADX = window_ADX,
+                           window_EMV=window_EMV, n=n, m=m)
 
     backtest = Backtest(config, events_queue, strategy,
                         data_handler= data_handler)
 
     results = backtest.start_trading()
     return backtest, results
-
-    # dict_ans = {
-    #     "window": [window],
-    #     "n": [n],
-    #     "m": [m],
-    #     "Sharpe Ratio": [results['sharpe']],
-    #     "Total Returns": [(results['cum_returns'][-1] - 1)],
-    #     "Max Drawdown": [(results["max_drawdown"] * 100.0)],
-    #     "Max Drawdown Duration": [(results['max_drawdown_duration'])],
-    #     "Trades": [results['trade_info']['trading_num']],
-    #     "Trade Winning": [results['trade_info']['win_pct']],
-    #     "Average Trade": [results['trade_info']['avg_trd_pct']],
-    #     "Average Win": [results['trade_info']['avg_win_pct']],
-    #     "Average Loss": [results['trade_info']['avg_loss_pct']],
-    #     "Best Trade": [results['trade_info']['max_win_pct']],
-    #     "Worst Trade": [results['trade_info']['max_loss_pct']],
-    #     "Worst Trade Date": [results['trade_info']['max_loss_dt']],
-    #     "Avg Days in Trade": [results['trade_info']['avg_dit']]
-    # }
-    # return pd.DataFrame(dict_ans)
-
+    
 
 if __name__ == "__main__":
     config = {
         "csv_dir": "C:/backtest/Binance",
-        "out_dir": "C:/backtest/results/EMVStrategy",
-        "title": "EMVStrategy",
+        "out_dir": "C:/backtest/results/ADX_EMVStrategy",
+        "title": "ADX_EMVStrategy",
         "is_plot": True,
         "save_plot": True,
         "save_tradelog": True,
@@ -145,32 +152,6 @@ if __name__ == "__main__":
 
     trading_data = None
 
-    backtest, results = run_backtest(config, trading_data, ohlc_data, window=52, n=1, m=95)
+    backtest, results = run_backtest(config, trading_data, ohlc_data, window_ADX = 18, window_EMV=65, n=14, m=9)
 
 
-
-    # # interval = np.array([5, 10, 12, 26, 30, 35, 45, 60, 72, 84, 96, 120, 252])
-    # interval = np.array([5, 12, 26, 45, 60, 96, 120, 252])
-    # # interval = np.array([5, 30, 120])
-
-    # pool = Pool(4)
-    # results = []
-    # for i in range(len(interval)):
-    #     for j in range(len(interval)):
-    #         for k in range(len(interval)):
-    #             window = interval[i]
-    #             n = interval[j]
-    #             m = interval[k]
-    #             result = pool.apply_async(run, args=(config, trading_data, ohlc_data, window, n, m, ))
-    #             results.append(result)
-
-    # ans = pd.DataFrame()
-    # for results in results:
-    #     df = results.get()
-    #     ans = pd.concat([ans, df], ignore_index=True)
-    # pool.close()
-
-    # if not os.path.exists(config['out_dir']):
-    #     os.makedirs(config['out_dir'])
-    # ans = ans.sort_values(by="Total Returns", ascending=False)
-    # ans.to_csv(config['out_dir'] + "/result_EMVStrategy.csv")

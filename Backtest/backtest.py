@@ -158,10 +158,11 @@ class Backtest(object):
                             '''      
                             self.portfolio_handler.update_fill(event)  
 
-            # update timeline for portfolio
-            self.portfolio_handler.update_timeindex(now_time) 
-            # update performance's equity for every tick
-            self.performance.update(now_time)        
+            if now_time is not None:
+                # update timeline for portfolio
+                self.portfolio_handler.update_timeindex(now_time) 
+                # update performance's equity for every tick
+                self.performance.update(now_time)    
 
         print("---------------------------------")
         print("Backtest complete.")
@@ -174,20 +175,28 @@ class Backtest(object):
         return:
         results: a dict with all important results & stats.
         '''
+        def pct_format(x):
+            return '{:.2%}'.format(x)
+
         # calculating the backtest results 
-        results = self.performance.get_results()                                    
+        results = self.performance.get_results()        
+        self.compliance.record_results(results)
+
         print("Sharpe Ratio: %0.10f" % results['sharpe'])
-        print("Max Drawdown: %0.10f" % (results["max_drawdown"] * 100.0))
-        print("Max Drawdown Duration: %d" % (results['max_drawdown_duration']))
-        print("Total Returns: %0.10f" % (results['cum_returns'][-1] - 1))
+        print("Sortino Ratio: %0.10f" % results['sortino'])
+        print("Max Drawdown: %0.10f" % (results["max_drawdown"]))
+        print("Max Drawdown Duration: %d" % (results['max_drawdown_duration'] * 100))
+        print("Total Returns: %0.10f" % (results['tot_return']))
+        print("Annualized Returns: %0.10f" % results['annual_return'])
+        print("Compound Annual Growth Rate: %0.10f" % results['cagr'])
         print("---------------------------------")
         print("Trades: %d" % results['trade_info']['trading_num'])
-        print("Trade Winning: %s" % results['trade_info']['win_pct'])
-        print("Average Trade: %s" % results['trade_info']['avg_trd_pct'])
-        print("Average Win: %s" % results['trade_info']['avg_win_pct'])
-        print("Average Loss: %s" % results['trade_info']['avg_loss_pct'])
-        print("Best Trade: %s" % results['trade_info']['max_win_pct'])
-        print("Worst Trade: %s" % results['trade_info']['max_loss_pct'])
+        print("Trade Winning: %s" % pct_format(results['trade_info']['win_pct']))
+        print("Average Trade: %s" % pct_format(results['trade_info']['avg_trd_pct']))
+        print("Average Win: %s" % pct_format(results['trade_info']['avg_win_pct']))
+        print("Average Loss: %s" % pct_format(results['trade_info']['avg_loss_pct']))
+        print("Best Trade: %s" % pct_format(results['trade_info']['max_win_pct']))
+        print("Worst Trade: %s" % pct_format(results['trade_info']['max_loss_pct']))
         print("Worst Trade Date: %s" % results['trade_info']['max_loss_dt'])
         print("Avg Days in Trade: %s" % results['trade_info']['avg_dit'])
         print("---------------------------------")

@@ -135,6 +135,7 @@ class OHLCDataHandler(DataHandler):
             times = times.to_series()
             self.times = pd.concat([self.times, times]).drop_duplicates()
             self.times = self.times.sort_index()
+            self.times = self.times.loc[self.start_date: self.end_date]
 
     def generate_bars(self):
         '''
@@ -251,7 +252,7 @@ class OHLCDataHandler(DataHandler):
                     self.events_queue.put(market_event)
                     now_time = timestamp
         if now_time is None:
-            return self.times[-1]
+            return None
         else:
             return now_time           
 
