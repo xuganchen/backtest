@@ -181,13 +181,13 @@ def plot_txt_curve(stats, ax=None, periods = 365, **kwargs):
     cum_returns = stats['cum_returns']
     daily_cum_returns = stats['daily_cum_returns']
 
-    if 'positions' not in stats:
-        trd_yr = 0
-    else:
-        positions = stats['positions']
+    positions = stats['positions']
+    if positions is not None:
         trd_yr = positions.shape[0] / (
                 (returns.index[-1] - returns.index[0]).days / (periods)
         )
+    else:
+        trd_yr = 0
 
     if ax is None:
         ax = plt.gca()
@@ -195,11 +195,10 @@ def plot_txt_curve(stats, ax=None, periods = 365, **kwargs):
     y_axis_formatter = FuncFormatter(format_perc)
     ax.yaxis.set_major_formatter(FuncFormatter(y_axis_formatter))
 
-    tot_ret = cum_returns[-1] - 1.0
-    years = len(cum_returns) / float(periods)
-    cagr = (cum_returns[-1] ** (1.0 / years)) - 1.0
+    tot_ret = stats['tot_return']
+    cagr = stats['cagr']
     sharpe = stats['sharpe']
-    sortino = np.sqrt(periods) * (np.mean(daily_returns)) / np.std(daily_returns[daily_returns < 0])
+    sortino = stats['sortino']
     slope, intercept, r_value, p_value, std_err = linregress(range(daily_cum_returns.shape[0]), daily_cum_returns)
     rsq = r_value ** 2
     dd = stats['drawdown']
@@ -259,29 +258,16 @@ def plot_txt_trade(stats, freq = 1, ax=None, **kwargs):
     if ax is None:
         ax = plt.gca()
 
-    if 'positions' not in stats:
-        num_trades = 0
-        win_pct_str = "N/A"
-        avg_trd_pct = "N/A"
-        avg_win_pct = "N/A"
-        avg_loss_pct = "N/A"
-        max_win_pct = "N/A"
-        max_loss_pct = "N/A"
-        max_loss_dt = 0
-        avg_dit = 0
-
-    else:
-        pos = stats['positions']
-        num_trades = pos.shape[0]
-        win_pct = pos[pos["return"] > 0].shape[0] / float(num_trades)
-        win_pct_str = '{:.0%}'.format(win_pct)
-        avg_trd_pct = '{:.2%}'.format(np.mean(pos["return"]))
-        avg_win_pct = '{:.2%}'.format(np.mean(pos[pos["return"] > 0]["return"]))
-        avg_loss_pct = '{:.2%}'.format(np.mean(pos[pos["return"] <= 0]["return"]))
-        max_win_pct = '{:.2%}'.format(np.max(pos["return"]))
-        max_loss_pct = '{:.2%}'.format(np.min(pos["return"]))
-        max_loss_dt = np.mean(pos[pos["return"] == np.min(pos["return"])]["timedelta"]).round(freq = "s")
-        avg_dit = np.mean(pos["timedelta"]).round(freq = "s")
+    trade_info = stats['trade_info']
+    num_trades = trade_info['trading_num']
+    win_pct_str = '{:.0%}'.format(trade_info['win_pct'])
+    avg_trd_pct = '{:.2%}'.format(trade_info['avg_trd_pct'])
+    avg_win_pct = '{:.2%}'.format(trade_info['avg_win_pct'])
+    avg_loss_pct = '{:.2%}'.format(trade_info['avg_loss_pct'])
+    max_win_pct = '{:.2%}'.format(trade_info['max_win_pct'])
+    max_loss_pct = '{:.2%}'.format(trade_info['max_loss_pct'])
+    max_loss_dt = trade_info['max_loss_dt']
+    avg_dit = trade_info['avg_dit']
 
     y_axis_formatter = FuncFormatter(format_perc)
     ax.yaxis.set_major_formatter(FuncFormatter(y_axis_formatter))

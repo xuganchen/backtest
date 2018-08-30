@@ -132,8 +132,8 @@ if __name__ == "__main__":
         "is_plot": True,
         "save_plot": True,
         "save_tradelog": True,
-        "start_date": pd.Timestamp("2018-01-01T00:0:00", freq="60" + "T"),  # str(freq) + "T"
-        "end_date": pd.Timestamp("2018-07-01T00:00:00", freq="60" + "T"),
+        "start_date": pd.Timestamp("2017-04-01T00:0:00", freq="60" + "T"),  # str(freq) + "T"
+        "end_date": pd.Timestamp("2018-04-01T00:00:00", freq="60" + "T"),
         "equity": 1.0,
         "freq": 60,  # min
         "commission_ratio": 0.002,
@@ -160,7 +160,7 @@ if __name__ == "__main__":
 
     trading_data = None
 
-    backtest, results = run_backtest(config, trading_data, ohlc_data, window = 10, num = 4, rev = 1)
+    backtest, results = run_backtest(config, trading_data, ohlc_data, window = 97, num = 3, rev = 1)
 
 
 

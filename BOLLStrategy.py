@@ -111,7 +111,7 @@ if __name__ == "__main__":
     config = {
         "csv_dir": "C:/backtest/Binance",
         "out_dir": "C:/backtest/results/BOLLStrategy",
-        "title": "MACDStrategy",
+        "title": "BOLLStrategy",
         "is_plot": True,
         "save_plot": True,
         "save_tradelog": True,
@@ -140,7 +140,7 @@ if __name__ == "__main__":
 
     trading_data = None
 
-    backtest, results = run_backtest(config, trading_data, ohlc_data, window = 43, a = 3)
+    backtest, results = run_backtest(config, trading_data, ohlc_data, window = 22, a = 1.28)
 
 
 
