@@ -72,7 +72,7 @@ class BOLL_EMVStrategy(Strategy):
                 lowerbound = bars_mean - self.a * bars_std
                 em, emv, maemv = self._get_em(bars_high, bars_low, bars_amount, bar_date)
 
-                if (event.close > upperbound and emv > maemv) and self.holdinds[ticker] == "EMPTY":
+                if (event.close > upperbound or emv > maemv) and self.holdinds[ticker] == "EMPTY":
                     self.generate_buy_signals(ticker, bar_date, "LONG")
                     self.holdinds[ticker] = "LONG"
                 elif (event.close < lowerbound or emv < maemv) and self.holdinds[ticker] == "LONG":
@@ -112,8 +112,8 @@ if __name__ == "__main__":
         "is_plot": True,
         "save_plot": True,
         "save_tradelog": True,
-        "start_date": pd.Timestamp("2017-04-01T00:0:00", freq="60" + "T"),  # str(freq) + "T"
-        "end_date": pd.Timestamp("2018-04-01T00:00:00", freq="60" + "T"),
+        "start_date": pd.Timestamp("2018-04-01T00:0:00", freq="60" + "T"),  # str(freq) + "T"
+        "end_date": pd.Timestamp("2018-09-01T00:00:00", freq="60" + "T"),
         "equity": 1.0,
         "freq": 60,  # min
         "commission_ratio": 0.001,
@@ -137,5 +137,5 @@ if __name__ == "__main__":
 
     trading_data = None
 
-    backtest, results = run_backtest(config, trading_data, ohlc_data, window_BOLL = 22, a = 1.28, window_EMV=65, n=14, m=9)
+    backtest, results = run_backtest(config, trading_data, ohlc_data, window_BOLL = 43, a = 3, window_EMV=52, n=1, m=95)
 
