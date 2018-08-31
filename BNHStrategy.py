@@ -93,3 +93,6 @@ if __name__ == "__main__":
     trading_data = None
 
     backtest, results = run_backtest(config, trading_data, ohlc_data)
+
+    mid_time = pd.Timestamp("2018-04-01T00:00:00", freq="60" + "T")
+    backtest.performance.plot_equity_with_BNH(mid_time)

@@ -196,7 +196,7 @@ def plot_txt_curve(stats, ax=None, periods = 365, **kwargs):
     ax.yaxis.set_major_formatter(FuncFormatter(y_axis_formatter))
 
     tot_ret = stats['tot_return']
-    cagr = stats['cagr']
+    IR = stats['IR']
     sharpe = stats['sharpe']
     sortino = stats['sortino']
     slope, intercept, r_value, p_value, std_err = linregress(range(daily_cum_returns.shape[0]), daily_cum_returns)
@@ -206,32 +206,32 @@ def plot_txt_curve(stats, ax=None, periods = 365, **kwargs):
     dd_dur = stats['max_drawdown_duration']
 
     ax.text(0.25, 8.9, 'Total Return', fontsize=8)
-    ax.text(7.50, 8.9, '{:.0%}'.format(tot_ret), fontweight='bold', horizontalalignment='right', fontsize=8)
+    ax.text(7.50, 8.9, '{:.3%}'.format(tot_ret), fontweight='bold', horizontalalignment='right', fontsize=8)
 
-    ax.text(0.25, 7.9, 'CAGR', fontsize=8)
-    ax.text(7.50, 7.9, '{:.2%}'.format(cagr), fontweight='bold', horizontalalignment='right', fontsize=8)
+    ax.text(0.25, 7.9, 'Infor Ratio', fontsize=8)
+    ax.text(7.50, 7.9, '{:.3%}'.format(IR), fontweight='bold', horizontalalignment='right', fontsize=8)
 
     ax.text(0.25, 6.9, 'Sharpe Ratio', fontsize=8)
-    ax.text(7.50, 6.9, '{:.2f}'.format(sharpe), fontweight='bold', horizontalalignment='right', fontsize=8)
+    ax.text(7.50, 6.9, '{:.3f}'.format(sharpe), fontweight='bold', horizontalalignment='right', fontsize=8)
 
     ax.text(0.25, 5.9, 'Sortino Ratio', fontsize=8)
-    ax.text(7.50, 5.9, '{:.2f}'.format(sortino), fontweight='bold', horizontalalignment='right', fontsize=8)
+    ax.text(7.50, 5.9, '{:.3f}'.format(sortino), fontweight='bold', horizontalalignment='right', fontsize=8)
 
     ax.text(0.25, 4.9, 'Annual Volatility', fontsize=8)
-    ax.text(7.50, 4.9, '{:.2%}'.format(daily_returns.std() * np.sqrt(365)), fontweight='bold', horizontalalignment='right',
+    ax.text(7.50, 4.9, '{:.3%}'.format(daily_returns.std() * np.sqrt(365)), fontweight='bold', horizontalalignment='right',
             fontsize=8)
 
     ax.text(0.25, 3.9, 'R-Squared', fontsize=8)
-    ax.text(7.50, 3.9, '{:.2f}'.format(rsq), fontweight='bold', horizontalalignment='right', fontsize=8)
+    ax.text(7.50, 3.9, '{:.3f}'.format(rsq), fontweight='bold', horizontalalignment='right', fontsize=8)
 
     ax.text(0.25, 2.9, 'Max Daily Drawdown', fontsize=8)
-    ax.text(7.50, 2.9, '{:.2%}'.format(dd_max), color='red', fontweight='bold', horizontalalignment='right', fontsize=8)
+    ax.text(7.50, 2.9, '{:.3%}'.format(dd_max), color='red', fontweight='bold', horizontalalignment='right', fontsize=8)
 
     ax.text(0.25, 1.9, 'Max Drawdown Duration', fontsize=8)
     ax.text(7.50, 1.9, '{:.0f}'.format(dd_dur), fontweight='bold', horizontalalignment='right', fontsize=8)
 
     ax.text(0.25, 0.9, 'Trades per Year', fontsize=8)
-    ax.text(7.50, 0.9, '{:.1f}'.format(trd_yr), fontweight='bold', horizontalalignment='right', fontsize=8)
+    ax.text(7.50, 0.9, '{:.3f}'.format(trd_yr), fontweight='bold', horizontalalignment='right', fontsize=8)
     ax.set_title('Curve', fontweight='bold')
 
     ax.grid(False)
@@ -260,12 +260,12 @@ def plot_txt_trade(stats, freq = 1, ax=None, **kwargs):
 
     trade_info = stats['trade_info']
     num_trades = trade_info['trading_num']
-    win_pct_str = '{:.0%}'.format(trade_info['win_pct'])
-    avg_trd_pct = '{:.2%}'.format(trade_info['avg_trd_pct'])
-    avg_win_pct = '{:.2%}'.format(trade_info['avg_win_pct'])
-    avg_loss_pct = '{:.2%}'.format(trade_info['avg_loss_pct'])
-    max_win_pct = '{:.2%}'.format(trade_info['max_win_pct'])
-    max_loss_pct = '{:.2%}'.format(trade_info['max_loss_pct'])
+    win_pct_str = '{:.3%}'.format(trade_info['win_pct'])
+    avg_trd_pct = '{:.3%}'.format(trade_info['avg_trd_pct'])
+    avg_win_pct = '{:.3%}'.format(trade_info['avg_win_pct'])
+    avg_loss_pct = '{:.3%}'.format(trade_info['avg_loss_pct'])
+    max_win_pct = '{:.3%}'.format(trade_info['max_win_pct'])
+    max_loss_pct = '{:.3%}'.format(trade_info['max_loss_pct'])
     max_loss_dt = trade_info['max_loss_dt']
     avg_dit = trade_info['avg_dit']
 
@@ -346,22 +346,22 @@ def plot_txt_time(stats, ax=None, **kwargs):
             horizontalalignment='right')
 
     ax.text(0.5, 7.9, 'Average Winning Month %', fontsize=8)
-    ax.text(9.5, 7.9, '{:.2%}'.format(mly_avg_win_pct), fontsize=8, fontweight='bold',
+    ax.text(9.5, 7.9, '{:.3%}'.format(mly_avg_win_pct), fontsize=8, fontweight='bold',
             color='red' if mly_avg_win_pct < 0 else 'green',
             horizontalalignment='right')
 
     ax.text(0.5, 6.9, 'Average Losing Month %', fontsize=8)
-    ax.text(9.5, 6.9, '{:.2%}'.format(mly_avg_loss_pct), fontsize=8, fontweight='bold',
+    ax.text(9.5, 6.9, '{:.3%}'.format(mly_avg_loss_pct), fontsize=8, fontweight='bold',
             color='red' if mly_avg_loss_pct < 0 else 'green',
             horizontalalignment='right')
 
     ax.text(0.5, 5.9, 'Best Month %', fontsize=8)
-    ax.text(9.5, 5.9, '{:.2%}'.format(mly_max_win_pct), fontsize=8, fontweight='bold',
+    ax.text(9.5, 5.9, '{:.3%}'.format(mly_max_win_pct), fontsize=8, fontweight='bold',
             color='red' if mly_max_win_pct < 0 else 'green',
             horizontalalignment='right')
 
     ax.text(0.5, 4.9, 'Worst Month %', fontsize=8)
-    ax.text(9.5, 4.9, '{:.2%}'.format(mly_max_loss_pct), fontsize=8, fontweight='bold',
+    ax.text(9.5, 4.9, '{:.3%}'.format(mly_max_loss_pct), fontsize=8, fontweight='bold',
             color='red' if mly_max_loss_pct < 0 else 'green',
             horizontalalignment='right')
 
@@ -370,12 +370,12 @@ def plot_txt_time(stats, ax=None, **kwargs):
             horizontalalignment='right')
 
     ax.text(0.5, 2.9, 'Best Year %', fontsize=8)
-    ax.text(9.5, 2.9, '{:.2%}'.format(yly_max_win_pct), fontsize=8,
+    ax.text(9.5, 2.9, '{:.3%}'.format(yly_max_win_pct), fontsize=8,
             fontweight='bold', color='red' if yly_max_win_pct < 0 else 'green',
             horizontalalignment='right')
 
     ax.text(0.5, 1.9, 'Worst Year %', fontsize=8)
-    ax.text(9.5, 1.9, '{:.2%}'.format(yly_max_loss_pct), fontsize=8,
+    ax.text(9.5, 1.9, '{:.3%}'.format(yly_max_loss_pct), fontsize=8,
             fontweight='bold', color='red' if yly_max_loss_pct < 0 else 'green',
             horizontalalignment='right')
 
@@ -416,3 +416,44 @@ def aggregate_returns(returns, convert_to):
             [lambda x: x.year]).apply(cumulate_returns)
     else:
         ValueError('convert_to must be weekly, monthly or yearly')
+
+def plot_equity_with_BNH(config, stats, mid_time, ax=None):
+    def format_two_dec(x, pos):
+        return '%.2f' % x
+
+    BNH_cum_returns = stats['BNH_cum_returns']
+    cum_returns = stats['cum_returns']
+
+    if ax is None:
+        ax = plt.gca()
+
+    y_axis_formatter = FuncFormatter(format_two_dec)
+    ax.yaxis.set_major_formatter(FuncFormatter(y_axis_formatter))
+    ax.xaxis.set_tick_params(reset=True)
+    ax.yaxis.grid(linestyle=':')
+    ax.xaxis.set_major_locator(mdates.YearLocator(1))
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+    ax.xaxis.grid(linestyle=':')
+
+    cum_returns.plot(lw=1, color='blue', alpha=0.6, x_compat=False,
+                    label=config['title'], ax=ax)
+    BNH_cum_returns.plot(lw=1, color='green', alpha=0.6, x_compat=False,
+                    label='Buy and Hold Strategy', ax=ax)
+
+    ax.axhline(1.0, linestyle='--', color='red', lw=1)
+    
+    mid_time = mid_time
+    end_time = cum_returns.index[-1]
+    ax.axvline(mid_time, linestyle='--', color='red', lw=1)
+    ax.axhline(cum_returns[mid_time], linestyle='--', color='blue', lw=0.5)
+    ax.axhline(cum_returns[end_time], linestyle='--', color='blue', lw=0.5)
+    ax.axhline(BNH_cum_returns[mid_time], linestyle='--', color='green', lw=0.5)
+    ax.axhline(BNH_cum_returns[end_time], linestyle='--', color='green', lw=0.5)
+    
+    
+    ax.set_ylabel('Cumulative returns')
+    ax.legend(loc='best')
+    ax.set_xlabel('')
+    plt.setp(ax.get_xticklabels(), visible=True, rotation=0, ha='center')
+
+    return ax

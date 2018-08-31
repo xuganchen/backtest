@@ -26,6 +26,7 @@ class Performance(object):
         self.portfolio_handler = portfolio_handler
         self.data_handler = data_handler
         self.equity = {}
+        self.BNH_equity = {}
         self.periods = periods
 
     def update(self, timestamp):
@@ -33,6 +34,7 @@ class Performance(object):
         Update performance's equity for every tick
         '''
         self.equity[timestamp] = self.portfolio_handler.equity
+        self.BNH_equity[timestamp] = self.portfolio_handler.BNH_equity
 
     def _create_drawdown(self, cum_returns):
         '''
@@ -132,6 +134,17 @@ class Performance(object):
         else:
             res_sortino = np.sqrt(self.periods) * (np.mean(res_daily_returns)) / np.std(res_daily_returns[res_daily_returns < 0])
 
+        # BNH
+        res_BNH_equity = pd.Series(self.BNH_equity).sort_index()
+        res_BNG_returns = res_BNH_equity.pct_change().fillna(0.0)
+        res_BNH_daily_returns = res_BNH_equity.resample("D").last().pct_change().fillna(0.0)
+        res_BNH_cum_returns = res_BNH_equity / self.config['equity']
+        IR_daily_returns = res_daily_returns - res_BNH_daily_returns
+        if np.std(IR_daily_returns) == 0:
+            res_IR = np.nan
+        else:
+            res_IR = np.sqrt(self.periods) * np.mean(IR_daily_returns) / np.std(IR_daily_returns)
+
 
         results = {}
         results['returns'] = res_returns
@@ -148,6 +161,10 @@ class Performance(object):
         results['max_drawdown_duration'] = res_mdd_dur
         results['sharpe'] = res_sharpe
         results['sortino'] = res_sortino
+        results['IR'] = res_IR
+        results['BNH_equity'] = res_BNH_equity
+        results['BNH_returns'] = res_BNG_returns
+        results['BNH_cum_returns'] = res_BNH_cum_returns
 
         positions = self._get_positions()
         if positions is not None:
@@ -188,7 +205,6 @@ class Performance(object):
             }
 
         return results
-
 
     def plot_results(self, stats = None):
         '''
@@ -255,5 +271,20 @@ class Performance(object):
             filename = out_dir + "\\" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
             fig.savefig(filename, dpi=150, bbox_inches='tight')
 
+    def plot_equity_with_BNH(self, mid_time, stats = None, savefig = False):
+        if stats is None:
+            stats = self.get_results()
+        fig, ax = plt.subplots()
+        title = self.config['title'] + "_" + "cum_returns"
+        fig.suptitle(title, y=0.94, weight='bold')
+        plot_equity_with_BNH(self.config, stats, mid_time, ax=ax)
+        plt.show()
 
+        if savefig:
+            out_dir = self.config['out_dir']
+            if not os.path.exists(out_dir):
+                os.makedirs(out_dir)
 
+            now = datetime.utcnow()
+            filename = out_dir + "\\" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
+            fig.savefig(filename, dpi=150, bbox_inches='tight')

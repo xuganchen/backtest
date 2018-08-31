@@ -128,6 +128,11 @@ class PortfolioHandler(Portfolio):
         self.current_tickers_info = {}
         self.closed_positions = []
 
+        self.BNH_equity = config['equity']
+        self.BNH_positions = dict([(ticker, 0) for ticker in self.tickers])
+        self.BNH_commission = dict([(ticker, 0) for ticker in self.tickers])
+        self.is_BNH = dict([(ticker, 0) for ticker in self.tickers])
+
     def _construct_all_positions(self):
         '''
         Initialize self.all_positions
@@ -163,6 +168,24 @@ class PortfolioHandler(Portfolio):
         d['total'] = self.equity
         return d
 
+    def generate_BNG(self):
+        for ticker in self.tickers:
+            self.is_BNH[ticker] = 1
+            
+            price = self.data_handler.get_latest_bar_value(ticker, "close") 
+            if self.config['suggested_quantity'] is not None:
+                quantity = self.config['suggested_quantity']
+            else:
+                cash = self.cash_for_order - self.min_handheld_cash
+                # if event.suggested_cash is not None and event.suggested_cash <= cash:
+                #     cash = event.suggested_cash
+                quantity_pro = (cash * (1 - self.commission_ratio)) / (price)
+                quantity = np.clip(quantity_pro, self.min_quantity, self.max_quantity)
+
+            self.BNH_positions[ticker] = quantity
+            self.BNH_commission[ticker] = self.commission_ratio * (quantity * price / (1-self.commission_ratio))
+
+
     def update_timeindex(self, lasest_datetime):
         '''
         Update the self.all_positions and self.all_holdings for each tick time
@@ -189,6 +212,12 @@ class PortfolioHandler(Portfolio):
         self.equity = dholding['total']
         self.cash_for_order = self.current_holdings['cash']
         self.all_holdings.append(dholding)
+
+        self.BNH_equity = self.min_handheld_cash
+        for ticker in self.tickers:
+            market_value = self.BNH_positions[ticker] * \
+                self.data_handler.get_latest_bar_value(ticker, "close")
+            self.BNH_equity += market_value
 
 
     def _update_positions_from_fill(self, event):
