@@ -25,6 +25,8 @@ class Performance(object):
 
     def plot_results(self, stats = None):
 
+    def plot_equity_with_BNH(self, mid_time, stats = None, savefig = False):
+
 
 ## event.py
 
@@ -216,6 +218,16 @@ class Performance(object):
         
         Parameters:
         stats = self.get_results()
+        '''
+        
+    def plot_equity_with_BNH(self, mid_time, stats = None, savefig = False):
+        '''
+        Outputs the statistics for cumulative returns with Buy and Hold Strategy
+
+        Parameters:
+        mid_time: the straight line
+        stats = self.get_results()
+        savefig = True or False
         '''
 ```
 

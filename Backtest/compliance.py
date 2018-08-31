@@ -87,24 +87,26 @@ class Compliance(AbstractCompliance):
         '''
         if self.config['save_tradelog']:
             fname = os.path.expanduser(os.path.join(self.out_dir, self.csv_fname))
+            units = str(self.config['freq']) + "mins"
             ratio = {
-                "Sharpe Ratio": results['sharpe'],
-                "Sortino Ratio": results['sortino'],
-                "Max Drawdown": (results["max_drawdown"] * 100.0),
-                "Max Drawdown Duration": (results['max_drawdown_duration']),
-                "Total Returns": (results['cum_returns'][-1] - 1),
-                "Annualized Returns": results['annual_return'],
-                "Compound Annual Growth Rate": results['cagr']
+                "Sharpe Ratio": '{:.3f}'.format(results['sharpe']),
+                "Sortino Ratio": '{:.3f}'.format(results['sortino']),
+                "Information Ratio": '{:.3f}'.format(results['IR']), 
+                "Max Drawdown": '{:.3%}'.format(results["max_drawdown"] * 100.0),
+                "Max Drawdown Duration": '{:}'.format(results['max_drawdown_duration']) + "*" + units,
+                "Total Returns": '{:.3%}'.format(results['cum_returns'][-1] - 1),
+                "Annualized Returns": '{:.3%}'.format(results['annual_return']),
+                "Compound Annual Growth Rate": '{:.3%}'.format(results['cagr'])
             }
 
             trade = {
-                "Trades": results['trade_info']['trading_num'],
-                "Trade Winning": results['trade_info']['win_pct'],
-                "Average Trade": results['trade_info']['avg_trd_pct'],
-                "Average Win": results['trade_info']['avg_win_pct'],
-                "Average Loss": results['trade_info']['avg_loss_pct'],
-                "Best Trade": results['trade_info']['max_win_pct'],
-                "Worst Trade": results['trade_info']['max_loss_pct'],
+                "Trades Num": results['trade_info']['trading_num'],
+                "Trade Winning": '{:.3%}'.format(results['trade_info']['win_pct']),
+                "Average Trade": '{:.3%}'.format(results['trade_info']['avg_trd_pct']),
+                "Average Win": '{:.3%}'.format(results['trade_info']['avg_win_pct']),
+                "Average Loss": '{:.3%}'.format(results['trade_info']['avg_loss_pct']),
+                "Best Trade": '{:.3%}'.format(results['trade_info']['max_win_pct']),
+                "Worst Trade": '{:.3%}'.format(results['trade_info']['max_loss_pct']),
                 "Worst Trade Date": results['trade_info']['max_loss_dt'],
                 "Avg Days in Trade": results['trade_info']['avg_dit']
             }

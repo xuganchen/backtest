@@ -116,7 +116,9 @@ class Backtest(object):
         print("---------------------------------")
         while self._continue_loop_condition():          
             # update timeline for data and generate MARKET event for each ticker
-            now_time = self.data_handler.update_bars()             
+            now_time = self.data_handler.update_bars()     
+            if sum(self.portfolio_handler.is_BNH.values()) == 0:
+                self.portfolio_handler.generate_BNG()        
             # run the loop forever
             while True:                                 
                 try:
@@ -184,6 +186,7 @@ class Backtest(object):
 
         print("Sharpe Ratio: %0.10f" % results['sharpe'])
         print("Sortino Ratio: %0.10f" % results['sortino'])
+        print("Information Ratio: %0.10f" % results['IR'])
         print("Max Drawdown: %0.10f" % (results["max_drawdown"]))
         print("Max Drawdown Duration: %d" % (results['max_drawdown_duration'] * 100))
         print("Total Returns: %0.10f" % (results['tot_return']))
