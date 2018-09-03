@@ -169,6 +169,9 @@ class PortfolioHandler(Portfolio):
         return d
 
     def generate_BNG(self):
+        '''
+        Initialize Buy and Hold Strategy
+        '''
         for ticker in self.tickers:
             self.is_BNH[ticker] = 1
             

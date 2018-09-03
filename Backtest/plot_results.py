@@ -5,11 +5,12 @@ import matplotlib.dates as mdates
 from matplotlib.ticker import FuncFormatter
 from matplotlib import cm
 import numpy as np
+import pandas as pd
 import seaborn as sns
 
 
 
-def plot_equity(stats, ax=None, log_scale=False, **kwargs):
+def plot_equity(stats, config, ax=None, log_scale=False, mid_time=None, **kwargs):
     '''
     Plots cumulative rolling returns
     '''
@@ -17,6 +18,7 @@ def plot_equity(stats, ax=None, log_scale=False, **kwargs):
         return '%.2f' % x
 
     equity = stats['cum_returns']
+    BNH_equity = stats['BNH_cum_returns']
 
     if ax is None:
         ax = plt.gca()
@@ -29,14 +31,26 @@ def plot_equity(stats, ax=None, log_scale=False, **kwargs):
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
     ax.xaxis.grid(linestyle=':')
 
-    equity.plot(lw=2, color='green', alpha=0.6, x_compat=False,
-                label='Backtest', ax=ax, **kwargs)
+    equity.plot(lw=2, color='blue', alpha=0.6, x_compat=False,
+                label=config['title'], ax=ax, **kwargs)
+    BNH_equity.plot(lw=2, color='green', alpha=0.6, x_compat=False,
+                label='Buy and Hold Strategy', ax=ax, **kwargs)
+
+    end_time = equity.index[-1]
+    ax.axhline(equity[end_time], linestyle='--', color='blue', lw=1)
+    ax.axhline(BNH_equity[end_time], linestyle='--', color='green', lw=1)
+
+    if mid_time is not None:
+        ax.axvline(mid_time, linestyle='--', color='red', lw=1)
+        ax.axhline(equity[mid_time], linestyle='--', color='blue', lw=1)
+        ax.axhline(BNH_equity[mid_time], linestyle='--', color='green', lw=1)
 
     ax.axhline(1.0, linestyle='--', color='black', lw=1)
-    ax.set_ylabel('Cumulative returns')
+    ax.set_ylabel('')
     ax.legend(loc='best')
     ax.set_xlabel('')
     plt.setp(ax.get_xticklabels(), visible=True, rotation=0, ha='center')
+    ax.set_title('Cumulative Returns', fontweight='bold')
 
     if log_scale:
         ax.set_yscale('log')
@@ -44,7 +58,7 @@ def plot_equity(stats, ax=None, log_scale=False, **kwargs):
     return ax
 
 
-def plot_rolling_sharpe(stats, ax=None, **kwargs):
+def plot_rolling_sharpe(stats, ax=None, mid_time=None, **kwargs):
     '''
     Plots the curve of rolling Sharpe ratio.
     '''
@@ -67,16 +81,24 @@ def plot_rolling_sharpe(stats, ax=None, **kwargs):
     sharpe.plot(lw=2, color='green', alpha=0.6, x_compat=False,
                 label='Backtest', ax=ax, **kwargs)
 
-    ax.axvline(sharpe.index[0], linestyle="dashed", c="gray", lw=2)
-    ax.set_ylabel('Rolling Annualised Sharpe')
+    if mid_time is not None:
+        if mid_time > sharpe.index[0]:
+            pass
+        else:
+            mid_time = sharpe.index[0]
+        ax.axvline(mid_time, linestyle='--', color='green', lw=1)
+        ax.axhline(sharpe[mid_time], linestyle='--', color='green', lw=1)
+
+    ax.set_ylabel('')
     ax.legend(loc='best')
     ax.set_xlabel('')
     plt.setp(ax.get_xticklabels(), visible=True, rotation=0, ha='center')
+    ax.set_title('Rolling Annualised Sharpe', fontweight='bold')
 
     return ax
 
 
-def plot_drawdown(stats, ax=None, **kwargs):
+def plot_drawdown(stats, ax=None, mid_time=None, **kwargs):
     '''
     Plots the underwater curve
     '''
@@ -98,6 +120,11 @@ def plot_drawdown(stats, ax=None, **kwargs):
 
     underwater = -100 * drawdown
     underwater.plot(ax=ax, lw=2, kind='area', color='red', alpha=0.3, **kwargs)
+
+    if mid_time is not None:
+        ax.axvline(mid_time, linestyle='--', color='red', lw=1)
+        ax.axhline(underwater[mid_time], linestyle='--', color='red', lw=1)
+
     ax.set_ylabel('')
     ax.set_xlabel('')
     plt.setp(ax.get_xticklabels(), visible=True, rotation=0, ha='center')
@@ -105,16 +132,50 @@ def plot_drawdown(stats, ax=None, **kwargs):
     return ax
 
 
+def plot_weekly_returns(stats, ax=None, **kwargs):
+    '''
+    Plots a bar of the weekly returns.
+    '''
+    def format_perc(x, pos):
+        return '%.0f%%' % x
+
+    rolling_return_week = stats['rolling_return_week']
+
+    if ax is None:
+        ax = plt.gca()
+
+    y_axis_formatter = FuncFormatter(format_perc)
+    ax.yaxis.set_major_formatter(FuncFormatter(y_axis_formatter))
+    ax.yaxis.grid(linestyle=':')
+
+    wly_ret = rolling_return_week * 100.0
+    wly_ret.plot(ax=ax, kind="bar")
+    # x = range(wly_ret.shape[0])
+    # y = wly_ret.values
+    # for a, b in zip(x, y):
+    #     if b >= 0:
+    #         ax.text(a, b+0.01, "%.3f" % b, ha='center', va='bottom', fontsize=7)
+    #     else:
+    #         ax.text(a, b-0.1, "%.3f" % b, ha='center', va='bottom', fontsize=7)
+    ax.set_title('Weekly Returns (%)', fontweight='bold')
+    ax.set_ylabel('')
+    ax.set_xlabel('')
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
+    ax.xaxis.grid(False)
+
+    return ax
+
 def plot_monthly_returns(stats, ax=None, **kwargs):
     '''
     Plots a heatmap of the monthly returns.
     '''
-    returns = stats['returns']
+
+    rolling_return_month = stats['rolling_return_month']
+
     if ax is None:
         ax = plt.gca()
 
-    monthly_ret = aggregate_returns(returns, 'monthly')
-    monthly_ret = monthly_ret.unstack()
+    monthly_ret = rolling_return_month.unstack()
     monthly_ret = np.round(monthly_ret, 3)
     monthly_ret.rename(
         columns={1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr',
@@ -126,7 +187,7 @@ def plot_monthly_returns(stats, ax=None, **kwargs):
     sns.heatmap(
         monthly_ret.fillna(0) * 100.0,
         annot=True,
-        fmt="0.1f",
+        fmt="0.001f",
         annot_kws={"size": 8},
         alpha=1.0,
         center=0.0,
@@ -148,7 +209,7 @@ def plot_yearly_returns(stats, ax=None, **kwargs):
     def format_perc(x, pos):
         return '%.0f%%' % x
 
-    returns = stats['returns']
+    rolling_return_year = stats['rolling_return_year']
 
     if ax is None:
         ax = plt.gca()
@@ -157,8 +218,16 @@ def plot_yearly_returns(stats, ax=None, **kwargs):
     ax.yaxis.set_major_formatter(FuncFormatter(y_axis_formatter))
     ax.yaxis.grid(linestyle=':')
 
-    yly_ret = aggregate_returns(returns, 'yearly') * 100.0
+    yly_ret = rolling_return_year * 100.0
     yly_ret.plot(ax=ax, kind="bar")
+    # x = range(yly_ret.shape[0])
+    # y = yly_ret.values
+    # for a, b in zip(x, y):
+    #     if b >= 0:
+    #         ax.text(a, b+0.01, "%.3f" % b, ha='center', va='bottom', fontsize=7)
+    #     else:
+    #         ax.text(a, b-0.1, "%.3f" % b, ha='center', va='bottom', fontsize=7)
+
     ax.set_title('Yearly Returns (%)', fontweight='bold')
     ax.set_ylabel('')
     ax.set_xlabel('')
@@ -322,6 +391,8 @@ def plot_txt_time(stats, ax=None, **kwargs):
         return '%.0f%%' % x
 
     returns = stats['returns']
+    rolling_return_month = stats['rolling_return_month']
+    rolling_return_year = stats['rolling_return_year']
 
     if ax is None:
         ax = plt.gca()
@@ -329,8 +400,8 @@ def plot_txt_time(stats, ax=None, **kwargs):
     y_axis_formatter = FuncFormatter(format_perc)
     ax.yaxis.set_major_formatter(FuncFormatter(y_axis_formatter))
 
-    mly_ret = aggregate_returns(returns, 'monthly')
-    yly_ret = aggregate_returns(returns, 'yearly')
+    mly_ret = rolling_return_month
+    yly_ret = rolling_return_year
 
     mly_pct = mly_ret[mly_ret >= 0].shape[0] / float(mly_ret.shape[0])
     mly_avg_win_pct = np.mean(mly_ret[mly_ret >= 0])
@@ -396,64 +467,3 @@ def plot_txt_time(stats, ax=None, **kwargs):
     ax.axis([0, 10, 0, 10])
     return ax
 
-def aggregate_returns(returns, convert_to):
-    """
-    Aggregates returns by day, week, month, or year.
-    """
-    def cumulate_returns(x):
-        return np.exp(np.log(1 + x).cumsum())[-1] - 1
-
-    if convert_to == 'weekly':
-        return returns.groupby(
-            [lambda x: x.year,
-             lambda x: x.month,
-             lambda x: x.isocalendar()[1]]).apply(cumulate_returns)
-    elif convert_to == 'monthly':
-        return returns.groupby(
-            [lambda x: x.year, lambda x: x.month]).apply(cumulate_returns)
-    elif convert_to == 'yearly':
-        return returns.groupby(
-            [lambda x: x.year]).apply(cumulate_returns)
-    else:
-        ValueError('convert_to must be weekly, monthly or yearly')
-
-def plot_equity_with_BNH(config, stats, mid_time, ax=None):
-    def format_two_dec(x, pos):
-        return '%.2f' % x
-
-    BNH_cum_returns = stats['BNH_cum_returns']
-    cum_returns = stats['cum_returns']
-
-    if ax is None:
-        ax = plt.gca()
-
-    y_axis_formatter = FuncFormatter(format_two_dec)
-    ax.yaxis.set_major_formatter(FuncFormatter(y_axis_formatter))
-    ax.xaxis.set_tick_params(reset=True)
-    ax.yaxis.grid(linestyle=':')
-    ax.xaxis.set_major_locator(mdates.YearLocator(1))
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
-    ax.xaxis.grid(linestyle=':')
-
-    cum_returns.plot(lw=1, color='blue', alpha=0.6, x_compat=False,
-                    label=config['title'], ax=ax)
-    BNH_cum_returns.plot(lw=1, color='green', alpha=0.6, x_compat=False,
-                    label='Buy and Hold Strategy', ax=ax)
-
-    ax.axhline(1.0, linestyle='--', color='red', lw=1)
-    
-    mid_time = mid_time
-    end_time = cum_returns.index[-1]
-    ax.axvline(mid_time, linestyle='--', color='red', lw=1)
-    ax.axhline(cum_returns[mid_time], linestyle='--', color='blue', lw=0.5)
-    ax.axhline(cum_returns[end_time], linestyle='--', color='blue', lw=0.5)
-    ax.axhline(BNH_cum_returns[mid_time], linestyle='--', color='green', lw=0.5)
-    ax.axhline(BNH_cum_returns[end_time], linestyle='--', color='green', lw=0.5)
-    
-    
-    ax.set_ylabel('Cumulative returns')
-    ax.legend(loc='best')
-    ax.set_xlabel('')
-    plt.setp(ax.get_xticklabels(), visible=True, rotation=0, ha='center')
-
-    return ax

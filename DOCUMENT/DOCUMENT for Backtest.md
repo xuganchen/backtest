@@ -25,6 +25,23 @@ class Performance(object):
 
     def plot_results(self, stats = None):
 
+    def plot_cum_returns(self, stats, log_scale=False, mid_time=None, savefig=False, **kwargs):
+        
+    def plot_rolling_sharpe(self, stats, mid_time=None, savefig=False, **kwargs):
+
+    def plot_drawdown(self, stats, mid_time=None, savefig=False, **kwargs):
+
+    def plot_weekly_returns(self, stats, savefig=False, **kwargs):
+
+    def plot_monthly_returns(self, stats, savefig=False, **kwargs):
+
+    def plot_yearly_returns(self, stats, savefig=False, **kwargs):
+
+    def plot_txt_curve(self, stats, savefig=False, **kwargs):
+
+    def plot_txt_trade(self, stats, savefig=False, **kwargs):
+
+    def plot_txt_time(self, stats=None, savefig=False, **kwargs):
 
 ## event.py
 
@@ -217,6 +234,101 @@ class Performance(object):
         Parameters:
         stats = self.get_results()
         '''
+        
+
+    def plot_cum_returns(self, stats, log_scale=False, mid_time=None, savefig=False, **kwargs):
+        '''
+        Plots cumulative rolling returns
+
+        Parameters:
+        mid_time: the straight line
+        stats = self.get_results()
+        savefig = True or False
+        log_scale = True or False
+        '''
+
+
+    def plot_rolling_sharpe(self, stats, mid_time=None, savefig=False, **kwargs):
+        '''
+        Plots the curve of rolling Sharpe ratio.
+
+        Parameters:
+        mid_time: the straight line
+        stats = self.get_results()
+        savefig = True or False
+        '''
+
+    def plot_drawdown(self, stats, mid_time=None, savefig=False, **kwargs):
+        '''
+        Plots the underwater curve
+
+        Parameters:
+        mid_time: the straight line
+        stats = self.get_results()
+        savefig = True or False
+        '''
+
+
+    def plot_weekly_returns(self, stats, savefig=False, **kwargs):
+        '''
+        Plots a bar of the weekly returns.
+
+        Parameters:
+        stats = self.get_results()
+        savefig = True or False
+        '''
+
+
+    def plot_monthly_returns(self, stats, savefig=False, **kwargs):
+        '''
+        Plots a heatmap of the monthly returns.
+
+        Parameters:
+        stats = self.get_results()
+        savefig = True or False
+        '''
+
+
+    def plot_yearly_returns(self, stats, savefig=False, **kwargs):
+        '''
+        Plots a barplot of returns by year.
+
+        Parameters:
+        stats = self.get_results()
+        savefig = True or False
+        '''
+
+
+    def plot_txt_curve(self, stats, savefig=False, **kwargs):
+        """
+        Outputs the statistics for the equity curve.
+
+        Parameters:
+        stats = self.get_results()
+        savefig = True or False
+        """
+
+
+    def plot_txt_trade(self, stats, savefig=False, **kwargs):
+        '''
+        Outputs the statistics for the trades.
+
+        Parameters:
+        stats = self.get_results()
+        savefig = True or False
+        '''
+
+
+    def plot_txt_time(self, stats=None, savefig=False, **kwargs):
+        '''
+        Outputs the statistics for various time frames.
+
+        Parameters:
+        stats = self.get_results()
+        savefig = True or False
+        '''
+
+
 ```
 
 ## event.py
