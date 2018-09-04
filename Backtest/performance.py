@@ -65,6 +65,7 @@ class Performance(object):
         Return a dict with all important results & stats.
         
         includings:
+            results['config']
             results['returns']
             results['daily_returns']
             results['equity']        
@@ -79,6 +80,13 @@ class Performance(object):
             results['max_drawdown_duration']
             results['sharpe']
             results['sortino']
+            results['IR'] 
+            results['rolling_return_week'] 
+            results['rolling_return_month'] 
+            results['rolling_return_year'] 
+            results['BNH_equity'] 
+            results['BNH_returns'] 
+            results['BNH_cum_returns'] 
             results['positions']
             results['trade_info'] = {
                 "trading_num": 'Trades Number'
@@ -90,6 +98,17 @@ class Performance(object):
                 "max_loss_pct": 'Worst Trade %'
                 "max_loss_dt": 'Worst Trade Date'
                 "avg_dit": 'Avg Days in Trade'
+                "avg_com_imp": 'Avg Commission Impact'
+            }
+            results['time_info'] = {
+                'mly_pct': 'Winning Months %'
+                'mly_avg_win_pct': 'Average Winning Month %'
+                'mly_avg_loss_pct': 'Average Losing Month %'
+                'mly_max_win_pct': 'Best Month %'
+                'mly_max_loss_pct': 'Worst Month %'
+                'yly_pct': 'Winning Years %'
+                'yly_max_win_pct': 'Best Year %'
+                'yly_max_loss_pct': 'Worst Year %'
             }
         """
         # Equity
@@ -181,6 +200,7 @@ class Performance(object):
         results['BNH_equity'] = res_BNH_equity
         results['BNH_returns'] = res_BNG_returns
         results['BNH_cum_returns'] = res_BNH_cum_returns
+        results['config'] = self.config
 
         positions = self._get_positions()
         if positions is not None:
@@ -193,8 +213,9 @@ class Performance(object):
             max_win_pct = np.max(positions["return"])
             max_loss_pct = np.min(positions["return"])
             max_loss = positions[positions["return"] == np.min(positions["return"])]
-            max_loss_dt = np.mean(max_loss["timedelta"]).round(freq = "s")
-            avg_dit = np.mean(positions["timedelta"]).round(freq = "s")
+            max_loss_dt = np.mean(max_loss["holding_period"]).seconds / (60 * self.config['freq'])
+            avg_dit = np.mean(positions["holding_period"]).seconds / (60 * self.config['freq'])
+            avg_com_imp = np.mean(positions['commission_impact'])
             results['trade_info'] = {
                 "trading_num": num_trades,      # 'Trades'
                 "win_pct": win_pct,             # 'Trade Winning %'
@@ -204,7 +225,8 @@ class Performance(object):
                 "max_win_pct": max_win_pct,     # 'Best Trade %'
                 "max_loss_pct": max_loss_pct,   # 'Worst Trade %'
                 "max_loss_dt": max_loss_dt,     # 'Worst Trade Date'
-                "avg_dit": avg_dit              # 'Avg Days in Trade'
+                "avg_dit": avg_dit,             # 'Avg Days in Trade'
+                "avg_com_imp": avg_com_imp      # 'Avg Commission Impact'
             }
         else:
             results['positions'] = None
@@ -217,8 +239,28 @@ class Performance(object):
                 "max_win_pct": np.nan,          # 'Best Trade %'
                 "max_loss_pct": np.nan,         # 'Worst Trade %'
                 "max_loss_dt": 0,               # 'Worst Trade Date'
-                "avg_dit": 0                    # 'Avg Days in Trade'
+                "avg_dit": 0,                   # 'Avg Days in Trade'
+                "avg_com_imp": 0                # 'Avg Commission Impact'
             }
+
+        mly_pct = res_rolling_return_month[res_rolling_return_month >= 0].shape[0] / float(res_rolling_return_month.shape[0])
+        mly_avg_win_pct = np.mean(res_rolling_return_month[res_rolling_return_month >= 0])
+        mly_avg_loss_pct = np.mean(res_rolling_return_month[res_rolling_return_month < 0])
+        mly_max_win_pct = np.max(res_rolling_return_month)
+        mly_max_loss_pct = np.min(res_rolling_return_month)
+        yly_pct = res_rolling_return_year[res_rolling_return_year >= 0].shape[0] / float(res_rolling_return_year.shape[0])
+        yly_max_win_pct = np.max(res_rolling_return_year)
+        yly_max_loss_pct = np.min(res_rolling_return_year)
+        results['time_info'] = {
+            'mly_pct': mly_pct,                     # 'Winning Months %'
+            'mly_avg_win_pct': mly_avg_win_pct,     # 'Average Winning Month %'
+            'mly_avg_loss_pct': mly_avg_loss_pct,   # 'Average Losing Month %'
+            'mly_max_win_pct': mly_max_win_pct,     # 'Best Month %'
+            'mly_max_loss_pct': mly_max_loss_pct,   # 'Worst Month %'
+            'yly_pct': yly_pct,                     # 'Winning Years %'
+            'yly_max_win_pct': yly_max_win_pct,     # 'Best Year %'
+            'yly_max_loss_pct': yly_max_loss_pct    # 'Worst Year %'
+        }
 
         return results
 
@@ -291,7 +333,7 @@ class Performance(object):
 
 
 
-    def plot_cum_returns(self, stats, log_scale=False, mid_time=None, savefig=False, **kwargs):
+    def plot_cum_returns(self, stats, log_scale=False, mid_time=None, savefig=False, pltscatter = True, **kwargs):
         '''
         Plots cumulative rolling returns
 
@@ -305,7 +347,7 @@ class Performance(object):
             stats = self.get_results()
 
         plt.figure(figsize=(12,5))
-        plot_equity(stats, self.config, log_scale=log_scale, mid_time=mid_time, **kwargs)
+        plot_equity(stats, self.config, log_scale=log_scale, mid_time=mid_time, pltscatter=pltscatter, **kwargs)
 
         if savefig:
             out_dir = self.config['out_dir']

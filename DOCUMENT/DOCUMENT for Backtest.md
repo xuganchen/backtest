@@ -199,11 +199,15 @@ class Performance(object):
     def get_results(self):
         """
         Return a dict with all important results & stats.
-
+        
         includings:
+            results['config']
             results['returns']
             results['daily_returns']
-            results['equity']
+            results['equity']        
+            results['tot_return']
+            results['annual_return']
+            results['cagr']
             results['rolling_sharpe']
             results['cum_returns']
             results['daily_cum_returns']
@@ -211,6 +215,14 @@ class Performance(object):
             results['max_drawdown']
             results['max_drawdown_duration']
             results['sharpe']
+            results['sortino']
+            results['IR'] 
+            results['rolling_return_week'] 
+            results['rolling_return_month'] 
+            results['rolling_return_year'] 
+            results['BNH_equity'] 
+            results['BNH_returns'] 
+            results['BNH_cum_returns'] 
             results['positions']
             results['trade_info'] = {
                 "trading_num": 'Trades Number'
@@ -222,6 +234,17 @@ class Performance(object):
                 "max_loss_pct": 'Worst Trade %'
                 "max_loss_dt": 'Worst Trade Date'
                 "avg_dit": 'Avg Days in Trade'
+                "avg_com_imp": 'Avg Commission Impact'
+            }
+            results['time_info'] = {
+                'mly_pct': 'Winning Months %'
+                'mly_avg_win_pct': 'Average Winning Month %'
+                'mly_avg_loss_pct': 'Average Losing Month %'
+                'mly_max_win_pct': 'Best Month %'
+                'mly_max_loss_pct': 'Worst Month %'
+                'yly_pct': 'Winning Years %'
+                'yly_max_win_pct': 'Best Year %'
+                'yly_max_loss_pct': 'Worst Year %'
             }
         """
         return results

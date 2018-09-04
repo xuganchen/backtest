@@ -178,6 +178,8 @@ Finnally, run the backtesting:
 results = backtest.start_trading()
 ```
 
+**And the output have three files, including image(.png), trade log(.csv) and total results information(.pkl).**
+
 ### Specific Strategies Adopted by Users
 
 ```python
