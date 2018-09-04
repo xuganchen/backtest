@@ -91,7 +91,7 @@ class PortfolioHandler(Portfolio):
             }
         '''
         self.config = config
-        self.start_date = config['start_date']
+        self.start_date = data_handler.times[0]
         self.equity = config['equity']
         self.data_handler = data_handler
         self.events = events

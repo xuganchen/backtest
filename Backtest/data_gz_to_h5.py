@@ -42,15 +42,16 @@ from generate_bars import generate_bars
 tickers = ['BTCUSDT', 'CMTBNB', 'CMTBTC', 'CMTETH',
             'EOSUSDT', 'ETHUSDT', 'LTCUSDT', 'VENBNB',
             'VENBTC', 'VENETH', 'XRPUSDT']
-tickers = ['BTCUSDT']
+# tickers = ['BTCUSDT']
 csv_dir = 'F:\\Python\\Binance'
 for ticker in tickers:
     trading_data = {}
     trading_data[ticker] = pd.read_hdf(csv_dir + '\\' + ticker + '.h5', key=ticker)
-    df = generate_bars(trading_data, ticker, 1)
-    h5 = pd.HDFStore(csv_dir + '\\' + ticker + "_OHLC_1min.h5", 'w')
+    df = generate_bars(trading_data, ticker, 30)
+    h5 = pd.HDFStore(csv_dir + '\\' + ticker + "_OHLC_30min.h5", 'w')
     h5[ticker] = df
     h5.close()
+    print(ticker)
 
 # ticker = 'BTCUSDT'
 # csv_dir = 'C:/backtest/Binance'

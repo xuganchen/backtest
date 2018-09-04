@@ -333,7 +333,7 @@ class Performance(object):
 
 
 
-    def plot_cum_returns(self, stats, log_scale=False, mid_time=None, savefig=False, pltscatter = True, **kwargs):
+    def plot_cum_returns(self, stats, log_scale=False, mid_time=None, savefig=False, plt_position = True, **kwargs):
         '''
         Plots cumulative rolling returns
 
@@ -346,8 +346,8 @@ class Performance(object):
         if stats is None:
             stats = self.get_results()
 
-        plt.figure(figsize=(12,5))
-        plot_equity(stats, self.config, log_scale=log_scale, mid_time=mid_time, pltscatter=pltscatter, **kwargs)
+        fig, ax = plot_equity(stats, self.config, log_scale=log_scale, mid_time=mid_time, plt_position=plt_position, **kwargs)
+
 
         if savefig:
             out_dir = self.config['out_dir']
@@ -372,8 +372,7 @@ class Performance(object):
         if stats is None:
             stats = self.get_results()
             
-        plt.figure(figsize=(12,5))
-        plot_rolling_sharpe(stats, mid_time=mid_time, **kwargs)
+        fig, ax = plot_rolling_sharpe(stats, mid_time=mid_time, **kwargs)
 
         if savefig:
             out_dir = self.config['out_dir']
@@ -398,8 +397,7 @@ class Performance(object):
         if stats is None:
             stats = self.get_results()
             
-        plt.figure(figsize=(12,5))
-        plot_drawdown(stats, mid_time=mid_time, **kwargs)
+        fig, ax = plot_drawdown(stats, mid_time=mid_time, **kwargs)
 
         if savefig:
             out_dir = self.config['out_dir']
@@ -423,8 +421,7 @@ class Performance(object):
         if stats is None:
             stats = self.get_results()
             
-        plt.figure(figsize=(12,5))
-        plot_weekly_returns(stats, **kwargs)
+        fig, ax = plot_weekly_returns(stats, **kwargs)
 
         if savefig:
             out_dir = self.config['out_dir']
@@ -448,8 +445,7 @@ class Performance(object):
         if stats is None:
             stats = self.get_results()
             
-        plt.figure(figsize=(12,5))
-        plot_monthly_returns(stats, **kwargs)
+        fig, ax = plot_monthly_returns(stats, **kwargs)
 
         if savefig:
             out_dir = self.config['out_dir']
@@ -473,8 +469,7 @@ class Performance(object):
         if stats is None:
             stats = self.get_results()
             
-        plt.figure(figsize=(12,5))
-        plot_yearly_returns(stats, **kwargs)
+        fig, ax = plot_yearly_returns(stats, **kwargs)
 
         if savefig:
             out_dir = self.config['out_dir']
@@ -497,9 +492,8 @@ class Performance(object):
         """
         if stats is None:
             stats = self.get_results()
-        plt.figure(figsize=(5,5))
 
-        plot_txt_curve(stats, periods = self.periods ,**kwargs)
+        fig, ax = plot_txt_curve(stats, periods = self.periods ,**kwargs)
 
         if savefig:
             out_dir = self.config['out_dir']
@@ -523,9 +517,8 @@ class Performance(object):
         '''
         if stats is None:
             stats = self.get_results()
-        plt.figure(figsize=(5,5))
 
-        plot_txt_trade(stats, freq = self.config['freq'], **kwargs)
+        fig, ax = plot_txt_trade(stats, freq = self.config['freq'], **kwargs)
 
         if savefig:
             out_dir = self.config['out_dir']
@@ -549,8 +542,7 @@ class Performance(object):
         if stats is None:
             stats = self.get_results()
             
-        plt.figure(figsize=(5,5))
-        plot_txt_time(stats, **kwargs)
+        fig, ax = plot_txt_time(stats, **kwargs)
 
         if savefig:
             out_dir = self.config['out_dir']

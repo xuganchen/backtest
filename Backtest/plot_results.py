@@ -10,7 +10,7 @@ import seaborn as sns
 
 
 
-def plot_equity(stats, config, ax=None, log_scale=False, mid_time=None, pltscatter=True, **kwargs):
+def plot_equity(stats, config, ax=None, log_scale=False, mid_time=None, plt_position=True, **kwargs):
     '''
     Plots cumulative rolling returns
     '''
@@ -21,16 +21,18 @@ def plot_equity(stats, config, ax=None, log_scale=False, mid_time=None, pltscatt
 
     equity = stats['cum_returns'] * 100
     BNH_equity = stats['BNH_cum_returns'] * 100
-    if stats['positions'] is not None and pltscatter:
-        pltscatter = True
+    if stats['positions'] is not None and plt_position:
         buy_time = stats['positions']['buy_timestamp']
         sell_time = stats['positions']['sell_timestamp']
         buy_point = equity[buy_time]
         sell_point = equity[sell_time]
     else:
-        pltscatter = False
+        plt_position = False
 
+    fig_return = False
     if ax is None:
+        fig_return = True
+        fig = plt.figure(figsize=(10,5))
         ax = plt.gca()
 
     y_axis_formatter = FuncFormatter(format_perc)
@@ -46,9 +48,9 @@ def plot_equity(stats, config, ax=None, log_scale=False, mid_time=None, pltscatt
     BNH_equity.plot(lw=2, color='green', alpha=0.6, x_compat=False,
                 label='Buy and Hold Strategy', ax=ax, **kwargs)
 
-    if pltscatter:
-        ax.scatter(buy_point.index, buy_point, s=5, color='red', label='buy', marker='o')
-        ax.scatter(sell_point.index, sell_point, s=5, color='black', label='sell', marker='^')
+    if plt_position:
+        ax.scatter(buy_point.index, buy_point, s=10, color='red', label='buy', marker='o')
+        ax.scatter(sell_point.index, sell_point, s=10, color='black', label='sell', marker='^')
 
     end_time = equity.index[-1]
     ax.axhline(equity[end_time], linestyle='--', color='blue', lw=1)
@@ -69,7 +71,10 @@ def plot_equity(stats, config, ax=None, log_scale=False, mid_time=None, pltscatt
     if log_scale:
         ax.set_yscale('log')
 
-    return ax
+    if fig_return:
+        return fig, ax
+    else:
+        return ax
 
 
 def plot_rolling_sharpe(stats, ax=None, mid_time=None, **kwargs):
@@ -81,7 +86,10 @@ def plot_rolling_sharpe(stats, ax=None, mid_time=None, **kwargs):
 
     sharpe = stats['rolling_sharpe']
 
+    fig_return = False
     if ax is None:
+        fig_return = True
+        fig = plt.figure(figsize=(10,5))
         ax = plt.gca()
 
     y_axis_formatter = FuncFormatter(format_two_dec)
@@ -109,8 +117,10 @@ def plot_rolling_sharpe(stats, ax=None, mid_time=None, **kwargs):
     plt.setp(ax.get_xticklabels(), visible=True, rotation=0, ha='center')
     ax.set_title('Rolling Annualised Sharpe', fontweight='bold')
 
-    return ax
-
+    if fig_return:
+        return fig, ax
+    else:
+        return ax
 
 def plot_drawdown(stats, ax=None, mid_time=None, **kwargs):
     '''
@@ -121,7 +131,10 @@ def plot_drawdown(stats, ax=None, mid_time=None, **kwargs):
 
     drawdown = stats['drawdown']
 
+    fig_return = False
     if ax is None:
+        fig_return = True
+        fig = plt.figure(figsize=(10,5))
         ax = plt.gca()
 
     y_axis_formatter = FuncFormatter(format_perc)
@@ -143,7 +156,11 @@ def plot_drawdown(stats, ax=None, mid_time=None, **kwargs):
     ax.set_xlabel('')
     plt.setp(ax.get_xticklabels(), visible=True, rotation=0, ha='center')
     ax.set_title('Drawdown (%)', fontweight='bold')
-    return ax
+
+    if fig_return:
+        return fig, ax
+    else:
+        return ax
 
 
 def plot_weekly_returns(stats, ax=None, **kwargs):
@@ -155,7 +172,10 @@ def plot_weekly_returns(stats, ax=None, **kwargs):
 
     rolling_return_week = stats['rolling_return_week']
 
+    fig_return = False
     if ax is None:
+        fig = fig_return = True
+        plt.figure(figsize=(10,5))
         ax = plt.gca()
 
     y_axis_formatter = FuncFormatter(format_perc)
@@ -177,7 +197,10 @@ def plot_weekly_returns(stats, ax=None, **kwargs):
     ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
     ax.xaxis.grid(False)
 
-    return ax
+    if fig_return:
+        return fig, ax
+    else:
+        return ax
 
 def plot_monthly_returns(stats, ax=None, **kwargs):
     '''
@@ -186,7 +209,10 @@ def plot_monthly_returns(stats, ax=None, **kwargs):
 
     rolling_return_month = stats['rolling_return_month']
 
+    fig_return = False
     if ax is None:
+        fig_return = True
+        fig = plt.figure(figsize=(10,5))
         ax = plt.gca()
 
     monthly_ret = rolling_return_month.unstack()
@@ -213,7 +239,10 @@ def plot_monthly_returns(stats, ax=None, **kwargs):
     ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
     ax.set_xlabel('')
 
-    return ax
+    if fig_return:
+        return fig, ax
+    else:
+        return ax
 
 
 def plot_yearly_returns(stats, ax=None, **kwargs):
@@ -225,7 +254,10 @@ def plot_yearly_returns(stats, ax=None, **kwargs):
 
     rolling_return_year = stats['rolling_return_year']
 
+    fig_return = False
     if ax is None:
+        fig_return = True
+        fig = plt.figure(figsize=(10,5))
         ax = plt.gca()
 
     y_axis_formatter = FuncFormatter(format_perc)
@@ -248,7 +280,10 @@ def plot_yearly_returns(stats, ax=None, **kwargs):
     ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
     ax.xaxis.grid(False)
 
-    return ax
+    if fig_return:
+        return fig, ax
+    else:
+        return ax
 
 
 def plot_txt_curve(stats, ax=None, periods = 365, **kwargs):
@@ -272,7 +307,10 @@ def plot_txt_curve(stats, ax=None, periods = 365, **kwargs):
     else:
         trd_yr = 0
 
+    fig_return = False
     if ax is None:
+        fig_return = True
+        fig = plt.figure(figsize=(5,5))
         ax = plt.gca()
 
     y_axis_formatter = FuncFormatter(format_perc)
@@ -328,7 +366,11 @@ def plot_txt_curve(stats, ax=None, periods = 365, **kwargs):
     ax.set_xlabel('')
 
     ax.axis([0, 10, 0, 10])
-    return ax
+
+    if fig_return:
+        return fig, ax
+    else:
+        return ax
 
 
 def plot_txt_trade(stats, freq = 1, ax=None, **kwargs):
@@ -338,7 +380,10 @@ def plot_txt_trade(stats, freq = 1, ax=None, **kwargs):
     def format_perc(x, pos):
         return '%.0f%%' % x
 
+    fig_return = False
     if ax is None:
+        fig_return = True
+        fig = plt.figure(figsize=(5,5))
         ax = plt.gca()
 
     units = str(freq) + "mins"
@@ -396,7 +441,11 @@ def plot_txt_trade(stats, freq = 1, ax=None, **kwargs):
     ax.set_xlabel('')
 
     ax.axis([0, 10, 0, 10])
-    return ax
+
+    if fig_return:
+        return fig, ax
+    else:
+        return ax
 
 
 def plot_txt_time(stats, ax=None, **kwargs):
@@ -406,7 +455,10 @@ def plot_txt_time(stats, ax=None, **kwargs):
     def format_perc(x, pos):
         return '%.0f%%' % x
 
+    fig_return = False
     if ax is None:
+        fig_return = True
+        fig = plt.figure(figsize=(5,5))
         ax = plt.gca()
 
     time_info = stats['time_info']
@@ -477,5 +529,8 @@ def plot_txt_time(stats, ax=None, **kwargs):
     ax.set_xlabel('')
 
     ax.axis([0, 10, 0, 10])
-    return ax
 
+    if fig_return:
+        return fig, ax
+    else:
+        return ax
