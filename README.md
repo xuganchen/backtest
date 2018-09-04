@@ -3,9 +3,10 @@ This is event-driven backtesting simulation written in Python.
 
 * _Backtest_: the code of this backtesting system
 * _DOCUMENT_: the documents of _Backtest_, _BayesianOptimization_ and _hyperopt_
-* xxxxStrategy.py: the specific strategy, you can run them directly
-* xxxxStrategy_BO.ipynb: parameter adjusted file corresponding to "xxxxStrategy.py" using _Bayesian Optimization_
-* xxxxStrategy_hyperopt.ipynb: parameter adjusted file corresponding to "xxxxStrategy.py" using TPE based on [_hyperopt_](https://github.com/hyperopt/hyperopt) package
+* _strategy_: the folder of strategies
+    * xxxxStrategy.py: the specific strategy, you can run them directly
+    * xxxxStrategy_BO.ipynb: parameter adjusted file corresponding to "xxxxStrategy.py" using _Bayesian Optimization_
+    * xxxxStrategy_hyperopt.ipynb: parameter adjusted file corresponding to "xxxxStrategy.py" using TPE based on [_hyperopt_](https://github.com/hyperopt/hyperopt) package
 * _result_: results of some strategies using Beyesian Optimization and TPE. And the HTML file from xxxxStrategy_BO.ipynb and xxxxStrategy_hyperopt.ipynb
 * _BayesianOptimization_: the method of Bayesian Optimization, uesd to adjust parameters
 * _Binance_: data that have been processed into "OHLC" format. (using Backtest.open_json_gz_files and Backtest.generate bars)
@@ -66,6 +67,15 @@ while True:								# run the loop forever by each tick
 ## Run backtest
 
 ### Quick Start
+Import the package:
+```python
+import sys
+backtest_dir = 'C://backtest/backtest/'
+if backtest_dir not in sys.path:
+    sys.path.insert(0, backtest_dir)
+    
+from Backtest import *
+```
 
 Firtstly, initialize settings:
 
@@ -252,9 +262,13 @@ import numpy as np
 import pandas as pd
 import queue
 import matplotlib.pyplot as plt
-from BayesianOptimization.bayesian_optimization import BayesianOptimization
-from Backtest.backtest import Backtest
-from Backtest.data import OHLCDataHandler
+import sys
+backtest_dir = 'C://backtest/backtest/'
+if backtest_dir not in sys.path:
+    sys.path.insert(0, backtest_dir)
+    
+from Backtest import *
+from BayesianOptimization import *
 from ADXStrategy import ADXStrategy
 from Backtest.open_json_gz_files import open_json_gz_files
 from Backtest.generate_bars import generate_bars

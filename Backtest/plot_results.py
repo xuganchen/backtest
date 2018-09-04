@@ -16,14 +16,16 @@ def plot_equity(stats, config, ax=None, log_scale=False, mid_time=None, **kwargs
     '''
     def format_two_dec(x, pos):
         return '%.2f' % x
+    def format_perc(x, pos):
+        return '%.0f%%' % x
 
-    equity = stats['cum_returns']
-    BNH_equity = stats['BNH_cum_returns']
+    equity = stats['cum_returns'] * 100
+    BNH_equity = stats['BNH_cum_returns'] * 100
 
     if ax is None:
         ax = plt.gca()
 
-    y_axis_formatter = FuncFormatter(format_two_dec)
+    y_axis_formatter = FuncFormatter(format_perc)
     ax.yaxis.set_major_formatter(FuncFormatter(y_axis_formatter))
     ax.xaxis.set_tick_params(reset=True)
     ax.yaxis.grid(linestyle=':')
@@ -50,7 +52,7 @@ def plot_equity(stats, config, ax=None, log_scale=False, mid_time=None, **kwargs
     ax.legend(loc='best')
     ax.set_xlabel('')
     plt.setp(ax.get_xticklabels(), visible=True, rotation=0, ha='center')
-    ax.set_title('Cumulative Returns', fontweight='bold')
+    ax.set_title('Cumulative Returns (%)', fontweight='bold')
 
     if log_scale:
         ax.set_yscale('log')
