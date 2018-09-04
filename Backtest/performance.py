@@ -122,6 +122,8 @@ class Performance(object):
             results['rolling_return_week'] 
             results['rolling_return_month'] 
             results['rolling_return_year'] 
+            results['rolling_28D'] 
+            results['rolling_7D'] 
             results['BNH_equity'] 
             results['BNH_returns'] 
             results['BNH_cum_returns'] 
