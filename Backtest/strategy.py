@@ -52,7 +52,7 @@ class Strategy(object):
         print the information
         and generate LONG(buy) signal
         '''
-        print("%s: %s, %s" % (ticker, str, bar_date))
+        # print("%s: %s, %s" % (ticker, str, bar_date))
         signal = SignalEvent(ticker, "LONG", str, suggested_quantity, suggested_cash)
         self.events.put(signal)
 
@@ -62,6 +62,6 @@ class Strategy(object):
         print the information
         and generate SHORT(sell) signal
         '''
-        print("%s: %s, %s" % (ticker, str, bar_date))
+        # print("%s: %s, %s" % (ticker, str, bar_date))
         signal = SignalEvent(ticker, "SHORT", str, suggested_quantity, suggested_cash)
         self.events.put(signal)

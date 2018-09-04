@@ -41,11 +41,7 @@ class Performance(object):
         Calculate drawdown
         '''
         idx = cum_returns.index
-        hwm = np.zeros(len(idx))
-
-        for i in range(1, len(idx)):
-            hwm[i] = max(hwm[i-1], cum_returns.iloc[i])
-
+        hwm = cum_returns.expanding(min_periods=1).max()
         dd = pd.DataFrame(index = idx)
         dd['Drawdown'] = (hwm - cum_returns) / hwm
         dd['Drawdown'].iloc[0] = 0.0
@@ -59,6 +55,48 @@ class Performance(object):
             return None
         else:
             return pd.DataFrame(positions)
+
+    def _rolling_D(self, res_equity):
+        res_returns = res_equity.pct_change().fillna(0.0)
+        res_daily_returns = res_equity.resample('D').last().pct_change().fillna(0.0)
+        res_cum_returns = res_equity / res_equity[0]
+        res_tot_return = res_cum_returns[-1] - 1.0
+
+        times = res_equity.index
+        years = (times[-1] - times[0]).total_seconds() / (self.periods * 24 * 60 * 60)
+        res_annual_return = res_tot_return / years
+
+        res_drawdown, res_max_dd, res_mdd_dur = self._create_drawdown(res_cum_returns)
+
+        if np.std(res_daily_returns) == 0:
+            res_sharpe = np.nan
+        else:
+            res_sharpe = np.sqrt(self.periods) * np.mean(res_daily_returns) / np.std(res_daily_returns)
+
+        if np.std(res_daily_returns[res_daily_returns < 0]) == 0:
+            res_sortino = np.nan
+        else:
+            res_sortino = np.sqrt(self.periods) * (np.mean(res_daily_returns)) / np.std(res_daily_returns[res_daily_returns < 0])
+
+        res_BNH_equity = pd.Series(self.BNH_equity).sort_index().loc[times]
+        res_BNH_daily_returns = res_BNH_equity.resample("D").last().pct_change().fillna(0.0)
+        IR_daily_returns = res_daily_returns - res_BNH_daily_returns
+        if np.std(IR_daily_returns) == 0:
+            res_IR = np.nan
+        else:
+            res_IR = np.sqrt(self.periods) * np.mean(IR_daily_returns) / np.std(IR_daily_returns)
+
+
+        rolling_results = {
+            'returns': res_tot_return,
+            'annual_return': res_annual_return,
+            'max_drawdown': res_max_dd,
+            'max_drawdown_duration': res_mdd_dur,
+            'sharpe': res_sharpe, 
+            'sortino': res_sortino,
+            'IR': res_IR
+        }
+        return pd.Series(rolling_results)
 
     def get_results(self):
         """
@@ -177,6 +215,13 @@ class Performance(object):
         res_rolling_return_year = res_equity.resample("Y").apply(lambda x:x[-1] / x[0] - 1)
         res_rolling_return_year.index = res_rolling_return_year.index.year
 
+        ## rolling 28Day
+        res_rolling_28D = res_equity.resample('28D').apply(self._rolling_D)
+        res_rolling_28D = pd.DataFrame(res_rolling_28D.unstack())
+
+        ## rolling 7Day
+        res_rolling_7D = res_equity.resample('7D').apply(self._rolling_D)
+        res_rolling_7D = pd.DataFrame(res_rolling_7D.unstack())
 
         results = {}
         results['returns'] = res_returns
@@ -197,6 +242,8 @@ class Performance(object):
         results['rolling_return_week'] = res_rolling_return_week
         results['rolling_return_month'] = res_rolling_return_month
         results['rolling_return_year'] = res_rolling_return_year
+        results['rolling_28D'] = res_rolling_28D
+        results['rolling_7D'] = res_rolling_7D
         results['BNH_equity'] = res_BNH_equity
         results['BNH_returns'] = res_BNG_returns
         results['BNH_cum_returns'] = res_BNH_cum_returns
