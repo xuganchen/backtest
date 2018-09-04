@@ -10,7 +10,7 @@ import seaborn as sns
 
 
 
-def plot_equity(stats, config, ax=None, log_scale=False, mid_time=None, **kwargs):
+def plot_equity(stats, config, ax=None, log_scale=False, mid_time=None, pltscatter=True, **kwargs):
     '''
     Plots cumulative rolling returns
     '''
@@ -21,6 +21,14 @@ def plot_equity(stats, config, ax=None, log_scale=False, mid_time=None, **kwargs
 
     equity = stats['cum_returns'] * 100
     BNH_equity = stats['BNH_cum_returns'] * 100
+    if stats['positions'] is not None and pltscatter:
+        pltscatter = True
+        buy_time = stats['positions']['buy_timestamp']
+        sell_time = stats['positions']['sell_timestamp']
+        buy_point = equity[buy_time]
+        sell_point = equity[sell_time]
+    else:
+        pltscatter = False
 
     if ax is None:
         ax = plt.gca()
@@ -37,6 +45,10 @@ def plot_equity(stats, config, ax=None, log_scale=False, mid_time=None, **kwargs
                 label=config['title'], ax=ax, **kwargs)
     BNH_equity.plot(lw=2, color='green', alpha=0.6, x_compat=False,
                 label='Buy and Hold Strategy', ax=ax, **kwargs)
+
+    if pltscatter:
+        ax.scatter(buy_point.index, buy_point, s=5, color='red', label='buy', marker='o')
+        ax.scatter(sell_point.index, sell_point, s=5, color='black', label='sell', marker='^')
 
     end_time = equity.index[-1]
     ax.axhline(equity[end_time], linestyle='--', color='blue', lw=1)
@@ -329,6 +341,7 @@ def plot_txt_trade(stats, freq = 1, ax=None, **kwargs):
     if ax is None:
         ax = plt.gca()
 
+    units = str(freq) + "mins"
     trade_info = stats['trade_info']
     num_trades = trade_info['trading_num']
     win_pct_str = '{:.3%}'.format(trade_info['win_pct'])
@@ -337,8 +350,9 @@ def plot_txt_trade(stats, freq = 1, ax=None, **kwargs):
     avg_loss_pct = '{:.3%}'.format(trade_info['avg_loss_pct'])
     max_win_pct = '{:.3%}'.format(trade_info['max_win_pct'])
     max_loss_pct = '{:.3%}'.format(trade_info['max_loss_pct'])
+    avg_com_imp = '{:.3%}'.format(trade_info['avg_com_imp'])
     max_loss_dt = trade_info['max_loss_dt']
-    avg_dit = trade_info['avg_dit']
+    avg_dit = '{:.3f}'.format(trade_info['avg_dit'])
 
     y_axis_formatter = FuncFormatter(format_perc)
     ax.yaxis.set_major_formatter(FuncFormatter(y_axis_formatter))
@@ -361,11 +375,11 @@ def plot_txt_trade(stats, freq = 1, ax=None, **kwargs):
     ax.text(0.5, 3.9, 'Worst Trade %', fontsize=8)
     ax.text(9.5, 3.9, max_loss_pct, color='red', fontsize=8, fontweight='bold', horizontalalignment='right')
 
-    ax.text(0.5, 2.9, 'Worst Trade Date', fontsize=8)
-    ax.text(9.5, 2.9, max_loss_dt, fontsize=8, fontweight='bold', horizontalalignment='right')
+    ax.text(0.5, 2.9, 'Avg Holding Periods ' + units, fontsize=8)
+    ax.text(9.5, 2.9, avg_dit, fontsize=8, fontweight='bold', horizontalalignment='right')
 
-    ax.text(0.5, 1.9, 'Avg Days in Trade', fontsize=8)
-    ax.text(9.5, 1.9, avg_dit, fontsize=8, fontweight='bold', horizontalalignment='right')
+    ax.text(0.5, 1.9, 'Avg Commission Impact %', fontsize=8)
+    ax.text(9.5, 1.9, avg_com_imp, fontsize=8, fontweight='bold', horizontalalignment='right')
 
     ax.text(0.5, 0.9, 'Trades', fontsize=8)
     ax.text(9.5, 0.9, num_trades, fontsize=8, fontweight='bold', horizontalalignment='right')
@@ -392,27 +406,23 @@ def plot_txt_time(stats, ax=None, **kwargs):
     def format_perc(x, pos):
         return '%.0f%%' % x
 
-    returns = stats['returns']
-    rolling_return_month = stats['rolling_return_month']
-    rolling_return_year = stats['rolling_return_year']
-
     if ax is None:
         ax = plt.gca()
+
+    time_info = stats['time_info']
 
     y_axis_formatter = FuncFormatter(format_perc)
     ax.yaxis.set_major_formatter(FuncFormatter(y_axis_formatter))
 
-    mly_ret = rolling_return_month
-    yly_ret = rolling_return_year
 
-    mly_pct = mly_ret[mly_ret >= 0].shape[0] / float(mly_ret.shape[0])
-    mly_avg_win_pct = np.mean(mly_ret[mly_ret >= 0])
-    mly_avg_loss_pct = np.mean(mly_ret[mly_ret < 0])
-    mly_max_win_pct = np.max(mly_ret)
-    mly_max_loss_pct = np.min(mly_ret)
-    yly_pct = yly_ret[yly_ret >= 0].shape[0] / float(yly_ret.shape[0])
-    yly_max_win_pct = np.max(yly_ret)
-    yly_max_loss_pct = np.min(yly_ret)
+    mly_pct = time_info['mly_pct']
+    mly_avg_win_pct = time_info['mly_avg_win_pct']
+    mly_avg_loss_pct = time_info['mly_avg_loss_pct']
+    mly_max_win_pct = time_info['mly_max_win_pct']
+    mly_max_loss_pct = time_info['mly_max_loss_pct']
+    yly_pct = time_info['yly_pct']
+    yly_max_win_pct = time_info['yly_max_win_pct']
+    yly_max_loss_pct = time_info['yly_max_loss_pct']
 
     ax.text(0.5, 8.9, 'Winning Months %', fontsize=8)
     ax.text(9.5, 8.9, '{:.0%}'.format(mly_pct), fontsize=8, fontweight='bold',

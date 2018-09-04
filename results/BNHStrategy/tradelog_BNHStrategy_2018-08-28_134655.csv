@@ -1,8 +1,0 @@
-BNHStrategy,tickers,['BTCUSDT'],initial equity,1.0,frequency,60 min
-Start date,2017-04-01 00:00:00,End date,2018-04-01 00:00:00
-timestamp,ticker,action,quantity,exchange,price,commission
-2017-10-27 22:00:00,BTCUSDT,LONG,0.00017359240711329208,Binance,5754.86,0.001
-Sharpe Ratio,Sortino Ratio,Max Drawdown,Max Drawdown Duration,Total Returns,Annualized Returns,Compound Annual Growth Rate
-0.9699177923452427,1.5270459478394034,69.33965854029782,2509,0.21013176515154153,0.49456052195795375,0.5665805972210565
-Trades,Trade Winning,Average Trade,Average Win,Average Loss,Best Trade,Worst Trade,Worst Trade Date,Avg Days in Trade
-0,nan,nan,nan,nan,nan,nan,0,0

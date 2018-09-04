@@ -263,24 +263,32 @@ class PortfolioHandler(Portfolio):
                 "ticker": event.ticker,
                 "price": event.price,
                 "quantity": event.quantity,
-                "commission": event.commission
+                "commission": event.commission,
+                "action": event.action
             }
             self.current_tickers_info[event.ticker] = ticker_info
         elif event.ticker in self.current_tickers and event.action == "SHORT":
             self.current_tickers.remove(event.ticker)
             closed_info = self.current_tickers_info.pop(event.ticker)
+            earning = (event.price - closed_info['price']) * closed_info['quantity']
+            total_commission = event.commission + closed_info['commission']
             closed = {
                 "ticker": closed_info['ticker'],
                 "quantity": closed_info['quantity'],
                 "buy_price": closed_info['price'],
                 "sell_price": event.price,
-                "earning": (event.price - closed_info['price']) * closed_info['quantity'],
+                "buy_timestamp": closed_info['timestamp'],
+                "sell_timestamp": event.timestamp,
+                "action": closed_info['action'],
+                "earning": earning,
                 "return": (event.price - closed_info['price']) / closed_info['price'],
-                "timedelta": event.timestamp - closed_info['timestamp'],
+                "holding_period": event.timestamp - closed_info['timestamp'],
                 "commission_buy": closed_info['commission'],
-                "commission_sell": event.commission
+                "commission_sell": event.commission,
+                "commission_impact": (total_commission) / (closed_info['price'] * closed_info['quantity'])
             }
             self.closed_positions.append(closed)
+
         elif event.ticker not in self.current_tickers and event.action == "SHORT":
             self.current_tickers.append(event.ticker)
             ticker_info = {
@@ -288,22 +296,29 @@ class PortfolioHandler(Portfolio):
                 "ticker": event.ticker,
                 "price": event.price,
                 "quantity": -1 * event.quantity,
-                "commission": event.commission
+                "commission": event.commission,
+                "action": event.action
             }
             self.current_tickers_info[event.ticker] = ticker_info
         elif event.ticker in self.current_tickers and event.action == "LONG":
             self.current_tickers.remove(event.ticker)
             closed_info = self.current_tickers_info.pop(event.ticker)
+            earning = (event.price - closed_info['price']) * closed_info['quantity']
+            total_commission = event.commission + closed_info['commission']
             closed = {
                 "ticker": closed_info['ticker'],
                 "quantity": closed_info['quantity'],
                 "buy_price": closed_info['price'],
                 "sell_price": event.price,
+                "buy_timestamp": closed_info['timestamp'],
+                "sell_timestamp": event.timestamp,
+                "action": closed_info['action'],
                 "earning": (event.price - closed_info['price']) * closed_info['quantity'],
                 "return": (closed_info['price'] - event.price) / closed_info['price'],
-                "timedelta": event.timestamp - closed_info['timestamp'],
+                "holding_period": event.timestamp - closed_info['timestamp'],
                 "commission_buy": closed_info['commission'],
-                "commission_sell": event.commission
+                "commission_sell": event.commission,
+                "commission_impact": (total_commission) / (closed_info['price'] * closed_info['quantity'])
             }
             self.closed_positions.append(closed)
 
