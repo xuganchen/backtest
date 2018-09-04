@@ -1,0 +1,3 @@
+MACD_BOLLStrategy_2_62_38_1.3775574317268857,tickers,['ETHUSDT'],initial equity,1.0,frequency,60 min
+Start date,2018-02-01 00:00:00,End date,2018-06-01 00:00:00
+timestamp,ticker,action,quantity,exchange,price,commission
