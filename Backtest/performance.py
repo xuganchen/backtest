@@ -145,6 +145,19 @@ class Performance(object):
         else:
             res_IR = np.sqrt(self.periods) * np.mean(IR_daily_returns) / np.std(IR_daily_returns)
 
+        # rolling return 
+        ## by Week
+        res_rolling_return_week = res_equity.resample("W").apply(lambda x:x[-1] / x[0] - 1)
+        res_rolling_return_week.index = res_rolling_return_week.index.date
+
+        ## by Month
+        res_rolling_return_month = res_equity.resample("M").apply(lambda x:x[-1] / x[0] - 1)
+        res_rolling_return_month.index = [res_rolling_return_month.index.year, res_rolling_return_month.index.month] 
+
+        ## by Year
+        res_rolling_return_year = res_equity.resample("Y").apply(lambda x:x[-1] / x[0] - 1)
+        res_rolling_return_year.index = res_rolling_return_year.index.year
+
 
         results = {}
         results['returns'] = res_returns
@@ -162,6 +175,9 @@ class Performance(object):
         results['sharpe'] = res_sharpe
         results['sortino'] = res_sortino
         results['IR'] = res_IR
+        results['rolling_return_week'] = res_rolling_return_week
+        results['rolling_return_month'] = res_rolling_return_month
+        results['rolling_return_year'] = res_rolling_return_year
         results['BNH_equity'] = res_BNH_equity
         results['BNH_returns'] = res_BNG_returns
         results['BNH_cum_returns'] = res_BNH_cum_returns
@@ -234,7 +250,7 @@ class Performance(object):
         sns.set_context(rc)
         sns.set_style("whitegrid")
         sns.set_palette("deep", desat=.6)
-        vertical_sections = 6
+        vertical_sections = 7
         fig = plt.figure(figsize=(10, vertical_sections * 3.5))
         fig.suptitle(self.title, y=0.94, weight='bold')
         gs = gridspec.GridSpec(vertical_sections, 3, wspace=0.25, hspace=0.5)
@@ -245,15 +261,17 @@ class Performance(object):
         ax_equity = plt.subplot(gs[:2, :])
         ax_sharpe = plt.subplot(gs[2, :])
         ax_drawdown = plt.subplot(gs[3, :])
-        ax_monthly_returns = plt.subplot(gs[4, :2])
-        ax_yearly_returns = plt.subplot(gs[4, 2])
-        ax_txt_curve = plt.subplot(gs[5, 0])
-        ax_txt_trade = plt.subplot(gs[5, 1])
-        ax_txt_time = plt.subplot(gs[5, 2])
+        ax_week_returns = plt.subplot(gs[4, :])
+        ax_monthly_returns = plt.subplot(gs[5, :2])
+        ax_yearly_returns = plt.subplot(gs[5, 2])
+        ax_txt_curve = plt.subplot(gs[6, 0])
+        ax_txt_trade = plt.subplot(gs[6, 1])
+        ax_txt_time = plt.subplot(gs[6, 2])
 
-        plot_equity(stats, ax=ax_equity)
+        plot_equity(stats, self.config, ax=ax_equity)
         plot_rolling_sharpe(stats, ax=ax_sharpe)
         plot_drawdown(stats, ax=ax_drawdown)
+        plot_weekly_returns(stats, ax=ax_week_returns)
         plot_monthly_returns(stats, ax=ax_monthly_returns)
         plot_yearly_returns(stats, ax=ax_yearly_returns)
         plot_txt_curve(stats, ax=ax_txt_curve, periods = self.periods)
@@ -271,9 +289,38 @@ class Performance(object):
             filename = out_dir + "\\" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
             fig.savefig(filename, dpi=150, bbox_inches='tight')
 
-    def plot_equity_with_BNH(self, mid_time, stats = None, savefig = False):
+
+
+    def plot_cum_returns(self, stats, log_scale=False, mid_time=None, savefig=False, **kwargs):
         '''
-        Outputs the statistics for cumulative returns with Buy and Hold Strategy
+        Plots cumulative rolling returns
+
+        Parameters:
+        mid_time: the straight line
+        stats = self.get_results()
+        savefig = True or False
+        log_scale = True or False
+        '''
+        if stats is None:
+            stats = self.get_results()
+
+        plt.figure(figsize=(12,5))
+        plot_equity(stats, self.config, log_scale=log_scale, mid_time=mid_time, **kwargs)
+
+        if savefig:
+            out_dir = self.config['out_dir']
+            if not os.path.exists(out_dir):
+                os.makedirs(out_dir)
+
+            now = datetime.utcnow()
+            title = self.config['title'] + "_" + "cum_returns"
+            filename = out_dir + "\\" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
+            fig.savefig(filename, dpi=150, bbox_inches='tight')
+
+
+    def plot_rolling_sharpe(self, stats, mid_time=None, savefig=False, **kwargs):
+        '''
+        Plots the curve of rolling Sharpe ratio.
 
         Parameters:
         mid_time: the straight line
@@ -282,11 +329,9 @@ class Performance(object):
         '''
         if stats is None:
             stats = self.get_results()
-        fig, ax = plt.subplots()
-        title = self.config['title'] + "_" + "cum_returns"
-        fig.suptitle(title, y=0.94, weight='bold')
-        plot_equity_with_BNH(self.config, stats, mid_time, ax=ax)
-        plt.show()
+            
+        plt.figure(figsize=(12,5))
+        plot_rolling_sharpe(stats, mid_time=mid_time, **kwargs)
 
         if savefig:
             out_dir = self.config['out_dir']
@@ -294,5 +339,184 @@ class Performance(object):
                 os.makedirs(out_dir)
 
             now = datetime.utcnow()
+            title = self.config['title'] + "_" + "rolling_sharpe"
             filename = out_dir + "\\" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
             fig.savefig(filename, dpi=150, bbox_inches='tight')
+
+
+    def plot_drawdown(self, stats, mid_time=None, savefig=False, **kwargs):
+        '''
+        Plots the underwater curve
+
+        Parameters:
+        mid_time: the straight line
+        stats = self.get_results()
+        savefig = True or False
+        '''
+        if stats is None:
+            stats = self.get_results()
+            
+        plt.figure(figsize=(12,5))
+        plot_drawdown(stats, mid_time=mid_time, **kwargs)
+
+        if savefig:
+            out_dir = self.config['out_dir']
+            if not os.path.exists(out_dir):
+                os.makedirs(out_dir)
+
+            now = datetime.utcnow()
+            title = self.config['title'] + "_" + "drawdown"
+            filename = out_dir + "\\" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
+            fig.savefig(filename, dpi=150, bbox_inches='tight')
+
+
+    def plot_weekly_returns(self, stats, savefig=False, **kwargs):
+        '''
+        Plots a bar of the weekly returns.
+
+        Parameters:
+        stats = self.get_results()
+        savefig = True or False
+        '''
+        if stats is None:
+            stats = self.get_results()
+            
+        plt.figure(figsize=(12,5))
+        plot_weekly_returns(stats, **kwargs)
+
+        if savefig:
+            out_dir = self.config['out_dir']
+            if not os.path.exists(out_dir):
+                os.makedirs(out_dir)
+
+            now = datetime.utcnow()
+            title = self.config['title'] + "_" + "weely_returns"
+            filename = out_dir + "\\" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
+            fig.savefig(filename, dpi=150, bbox_inches='tight')
+
+
+    def plot_monthly_returns(self, stats, savefig=False, **kwargs):
+        '''
+        Plots a heatmap of the monthly returns.
+
+        Parameters:
+        stats = self.get_results()
+        savefig = True or False
+        '''
+        if stats is None:
+            stats = self.get_results()
+            
+        plt.figure(figsize=(12,5))
+        plot_monthly_returns(stats, **kwargs)
+
+        if savefig:
+            out_dir = self.config['out_dir']
+            if not os.path.exists(out_dir):
+                os.makedirs(out_dir)
+
+            now = datetime.utcnow()
+            title = self.config['title'] + "_" + "monthly_returns"
+            filename = out_dir + "\\" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
+            fig.savefig(filename, dpi=150, bbox_inches='tight')
+
+
+    def plot_yearly_returns(self, stats, savefig=False, **kwargs):
+        '''
+        Plots a barplot of returns by year.
+
+        Parameters:
+        stats = self.get_results()
+        savefig = True or False
+        '''
+        if stats is None:
+            stats = self.get_results()
+            
+        plt.figure(figsize=(12,5))
+        plot_yearly_returns(stats, **kwargs)
+
+        if savefig:
+            out_dir = self.config['out_dir']
+            if not os.path.exists(out_dir):
+                os.makedirs(out_dir)
+
+            now = datetime.utcnow()
+            title = self.config['title'] + "_" + "yeayly_returns"
+            filename = out_dir + "\\" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
+            fig.savefig(filename, dpi=150, bbox_inches='tight')
+
+
+    def plot_txt_curve(self, stats, savefig=False, **kwargs):
+        """
+        Outputs the statistics for the equity curve.
+
+        Parameters:
+        stats = self.get_results()
+        savefig = True or False
+        """
+        if stats is None:
+            stats = self.get_results()
+        plt.figure(figsize=(5,5))
+
+        plot_txt_curve(stats, periods = self.periods ,**kwargs)
+
+        if savefig:
+            out_dir = self.config['out_dir']
+            if not os.path.exists(out_dir):
+                os.makedirs(out_dir)
+
+            now = datetime.utcnow()
+            title = self.config['title'] + "_" + "txt_curve"
+            filename = out_dir + "\\" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
+            fig.savefig(filename, dpi=150, bbox_inches='tight')
+
+
+
+    def plot_txt_trade(self, stats, savefig=False, **kwargs):
+        '''
+        Outputs the statistics for the trades.
+
+        Parameters:
+        stats = self.get_results()
+        savefig = True or False
+        '''
+        if stats is None:
+            stats = self.get_results()
+        plt.figure(figsize=(5,5))
+
+        plot_txt_trade(stats, freq = self.config['freq'], **kwargs)
+
+        if savefig:
+            out_dir = self.config['out_dir']
+            if not os.path.exists(out_dir):
+                os.makedirs(out_dir)
+
+            now = datetime.utcnow()
+            title = self.config['title'] + "_" + "txt_trade"
+            filename = out_dir + "\\" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
+            fig.savefig(filename, dpi=150, bbox_inches='tight')
+
+
+    def plot_txt_time(self, stats=None, savefig=False, **kwargs):
+        '''
+        Outputs the statistics for various time frames.
+
+        Parameters:
+        stats = self.get_results()
+        savefig = True or False
+        '''
+        if stats is None:
+            stats = self.get_results()
+            
+        plt.figure(figsize=(5,5))
+        plot_txt_time(stats, **kwargs)
+
+        if savefig:
+            out_dir = self.config['out_dir']
+            if not os.path.exists(out_dir):
+                os.makedirs(out_dir)
+
+            now = datetime.utcnow()
+            title = self.config['title'] + "_" + "txt_time"
+            filename = out_dir + "\\" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
+            fig.savefig(filename, dpi=150, bbox_inches='tight')
+
