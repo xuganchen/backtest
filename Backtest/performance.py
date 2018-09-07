@@ -1,10 +1,11 @@
+import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+import seaborn as sns
 from datetime import datetime
 import pandas as pd
 import numpy as np
 from itertools import groupby
-import matplotlib.gridspec as gridspec
-import seaborn as sns
 import os
 
 from Backtest.plot_results import *
@@ -23,6 +24,11 @@ class Performance(object):
         periods: trading day of the year
         '''
         self.config = config
+        if self.config['freq'] == 'tick':
+            self.freq = 1
+        else:
+            self.freq = self.config['freq']
+
         self.portfolio_handler = portfolio_handler
         self.data_handler = data_handler
         self.equity = {}
@@ -262,8 +268,8 @@ class Performance(object):
             max_win_pct = np.max(positions["return"])
             max_loss_pct = np.min(positions["return"])
             max_loss = positions[positions["return"] == np.min(positions["return"])]
-            max_loss_dt = np.mean(max_loss["holding_period"]).seconds / (60 * self.config['freq'])
-            avg_dit = np.mean(positions["holding_period"]).seconds / (60 * self.config['freq'])
+            max_loss_dt = np.mean(max_loss["holding_period"]).seconds / (60 * self.freq)
+            avg_dit = np.mean(positions["holding_period"]).seconds / (60 * self.freq)
             avg_com_imp = np.mean(positions['commission_impact'])
             results['trade_info'] = {
                 "trading_num": num_trades,      # 'Trades'
@@ -320,6 +326,7 @@ class Performance(object):
         Parameters:
         stats = self.get_results()
         '''
+
         self.title = self.config['title']
 
         rc = {
@@ -366,10 +373,12 @@ class Performance(object):
         plot_monthly_returns(stats, ax=ax_monthly_returns)
         plot_yearly_returns(stats, ax=ax_yearly_returns)
         plot_txt_curve(stats, ax=ax_txt_curve, periods = self.periods)
-        plot_txt_trade(stats, ax=ax_txt_trade, freq = self.config['freq'])
+        plot_txt_trade(stats, ax=ax_txt_trade, freq = self.freq)
         plot_txt_time(stats, ax=ax_txt_time)
 
-        plt.show(block=False)
+        if self.config is not None and self.config['is_plot'] == True:
+            plt.show(block=False)
+
         if self.config is not None and self.config['save_plot'] == True:
             out_dir = self.config['out_dir']
             if not os.path.exists(out_dir):
@@ -377,7 +386,7 @@ class Performance(object):
 
             now = datetime.utcnow()
             title = self.config['title']
-            filename = out_dir + "\\" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
+            filename = out_dir + "/" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
             fig.savefig(filename, dpi=150, bbox_inches='tight')
 
 
@@ -405,7 +414,7 @@ class Performance(object):
 
             now = datetime.utcnow()
             title = self.config['title'] + "_" + "cum_returns"
-            filename = out_dir + "\\" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
+            filename = out_dir + "/" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
             fig.savefig(filename, dpi=150, bbox_inches='tight')
 
 
@@ -430,7 +439,7 @@ class Performance(object):
 
             now = datetime.utcnow()
             title = self.config['title'] + "_" + "rolling_sharpe"
-            filename = out_dir + "\\" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
+            filename = out_dir + "/" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
             fig.savefig(filename, dpi=150, bbox_inches='tight')
 
 
@@ -455,7 +464,7 @@ class Performance(object):
 
             now = datetime.utcnow()
             title = self.config['title'] + "_" + "drawdown"
-            filename = out_dir + "\\" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
+            filename = out_dir + "/" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
             fig.savefig(filename, dpi=150, bbox_inches='tight')
 
 
@@ -479,7 +488,7 @@ class Performance(object):
 
             now = datetime.utcnow()
             title = self.config['title'] + "_" + "weely_returns"
-            filename = out_dir + "\\" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
+            filename = out_dir + "/" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
             fig.savefig(filename, dpi=150, bbox_inches='tight')
 
 
@@ -527,7 +536,7 @@ class Performance(object):
 
             now = datetime.utcnow()
             title = self.config['title'] + "_" + "yeayly_returns"
-            filename = out_dir + "\\" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
+            filename = out_dir + "/" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
             fig.savefig(filename, dpi=150, bbox_inches='tight')
 
 
@@ -551,7 +560,7 @@ class Performance(object):
 
             now = datetime.utcnow()
             title = self.config['title'] + "_" + "txt_curve"
-            filename = out_dir + "\\" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
+            filename = out_dir + "/" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
             fig.savefig(filename, dpi=150, bbox_inches='tight')
 
 
@@ -567,7 +576,7 @@ class Performance(object):
         if stats is None:
             stats = self.get_results()
 
-        fig, ax = plot_txt_trade(stats, freq = self.config['freq'], **kwargs)
+        fig, ax = plot_txt_trade(stats, freq = self.freq, **kwargs)
 
         if savefig:
             out_dir = self.config['out_dir']
@@ -576,7 +585,7 @@ class Performance(object):
 
             now = datetime.utcnow()
             title = self.config['title'] + "_" + "txt_trade"
-            filename = out_dir + "\\" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
+            filename = out_dir + "/" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
             fig.savefig(filename, dpi=150, bbox_inches='tight')
 
 
@@ -600,6 +609,6 @@ class Performance(object):
 
             now = datetime.utcnow()
             title = self.config['title'] + "_" + "txt_time"
-            filename = out_dir + "\\" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
+            filename = out_dir + "/" + title + "_" + now.strftime("%Y-%m-%d_%H%M%S") + ".png"
             fig.savefig(filename, dpi=150, bbox_inches='tight')
 

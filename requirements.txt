@@ -1,0 +1,14 @@
+# for hyperopt
+
+hyperopt
+
+
+# for GPyOpt
+GPyOpt
+numpy
+pandas
+matplotlib
+multiprocess
+seaborn
+tables
+joblib <= 0.11

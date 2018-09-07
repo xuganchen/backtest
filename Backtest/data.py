@@ -241,12 +241,12 @@ class OHLCDataHandler(DataHandler):
                 if bar is not None:
                     self.latest_data[ticker].append(bar)
                     timestamp = bar[0]
-                    open = getattr(bar[1], "open")
-                    high = getattr(bar[1], "high")
-                    close = getattr(bar[1], "close")
-                    low = getattr(bar[1], "low")
-                    volume = getattr(bar[1], "volume")
-                    amount = getattr(bar[1], "amount")
+                    open = getattr(bar[1], "open", np.nan)
+                    high = getattr(bar[1], "high", np.nan)
+                    close = getattr(bar[1], "close", np.nan)
+                    low = getattr(bar[1], "low", np.nan)
+                    volume = getattr(bar[1], "volume", np.nan)
+                    amount = getattr(bar[1], "amount", np.nan)
                     freq = self.freq
                     market_event = MarketEvent(ticker, timestamp, open, high, low, close, volume, amount, freq)
                     self.events_queue.put(market_event)

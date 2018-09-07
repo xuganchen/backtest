@@ -1,0 +1,7 @@
+# Python:
+*.py[cod]
+*-checkpoint.ipynb
+
+
+# My config:
+strategy/config.json

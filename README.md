@@ -90,7 +90,7 @@ config = {
     "start_date": pd.Timestamp("2018-04-01T00:0:00", freq="60" + "T"),  # str(freq) + "T"
     "end_date": pd.Timestamp("2018-09-01T00:00:00", freq="60" + "T"),
     "equity": 1.0,
-    "freq": 60,  # min
+    "freq": 60,  # integet(min) or 'tick'
     "commission_ratio": 0.001,
     "suggested_quantity": None,     # None or a value
     "max_quantity": None,           # None or a value, Maximum purchase quantity

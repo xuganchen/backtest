@@ -73,6 +73,7 @@ class Backtest(object):
         self.execution_handler = execution_handler
         self.performance = performance
         self.compliance = compliance
+
         self._config_backtest()
 
     def _config_backtest(self):

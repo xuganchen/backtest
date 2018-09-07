@@ -49,8 +49,8 @@ def plot_equity(stats, config, ax=None, log_scale=False, mid_time=None, plt_posi
                 label='Buy and Hold Strategy', ax=ax, **kwargs)
 
     if plt_position:
-        ax.scatter(buy_point.index, buy_point, s=10, color='red', label='buy', marker='o')
-        ax.scatter(sell_point.index, sell_point, s=10, color='black', label='sell', marker='^')
+        ax.scatter(list(buy_point.index), list(buy_point), s=10, color='red', label='buy', marker='o')
+        ax.scatter(list(sell_point.index), list(sell_point), s=10, color='black', label='sell', marker='^')
 
     end_time = equity.index[-1]
     ax.axhline(equity[end_time], linestyle='--', color='blue', lw=1)

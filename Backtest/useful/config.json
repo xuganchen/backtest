@@ -1,0 +1,10 @@
+{
+    "backtest_folder": "C:/backtest/backtest",
+    "data_folder": "C:/backtest/Binance",
+    "output_folder": "C:/backtest/results",
+    "GPyOpt": {
+        "batch_size": 1,
+        "num_cores": 1
+    }
+
+}
